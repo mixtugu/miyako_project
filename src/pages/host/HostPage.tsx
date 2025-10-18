@@ -12,7 +12,7 @@ const K_PHOTOS: Photo[] = Array.from({ length: 5 }).map((_, i) => {
   return { id: `k${n}`, url: `/K_${n}.jpg`, label: `絵_${n}` };
 });
 
-const PHOTOS: Photo[] = [...L_PHOTOS, ...K_PHOTOS];
+
 
 export default function HostPage() {
   const navigate = useNavigate();

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { RealtimePostgresInsertPayload } from "@supabase/supabase-js";
 import { useSearchParams, Link } from "react-router-dom";
 
@@ -35,6 +35,44 @@ type DBCommentRow = {
   created_at: string;
 };
 
+type DBPosRow = {
+  comment_id: string;
+  photo_id: string;
+  top_pct: number;
+  left_pct: number;
+  updated_at?: string;
+};
+
+async function listPositionsByPhoto(photoId: string): Promise<DBPosRow[]> {
+  const { data, error } = await supabase
+    .from("comment_positions")
+    .select("comment_id, photo_id, top_pct, left_pct, updated_at")
+    .eq("photo_id", photoId);
+
+  if (error) {
+    console.warn("listPositionsByPhoto error:", error.message);
+    return [];
+  }
+  return (data ?? []) as DBPosRow[];
+}
+
+async function upsertPosition(row: DBPosRow): Promise<void> {
+  const { error } = await supabase
+    .from("comment_positions")
+    .upsert(
+      {
+        comment_id: row.comment_id,
+        photo_id: row.photo_id,
+        top_pct: row.top_pct,
+        left_pct: row.left_pct,
+      },
+      { onConflict: "comment_id" }
+    );
+  if (error) {
+    console.warn("upsertPosition error:", error.message);
+  }
+}
+
 function hashToUnit(s: string): number {
   // deterministic hash -> [0,1)
   let h = 0;
@@ -48,8 +86,8 @@ function positionFor(id: string): { top: string; left: string } {
   // spread comments within safe margins (5%~85%) to avoid edges
   const h1 = hashToUnit(id);
   const h2 = hashToUnit(id + "x");
-  const topPct = 8 + h1 * 74;   // 8% ~ 82%
-  const leftPct = 8 + h2 * 74;  // 8% ~ 82%
+  const topPct = 4 + h1 * 92;   // 4% ~ 96%
+  const leftPct = 4 + h2 * 92;  // 4% ~ 96%
   return { top: `${topPct.toFixed(2)}%`, left: `${leftPct.toFixed(2)}%` };
 }
 
@@ -73,6 +111,12 @@ export default function HostPicture() {
   const [items, setItems] = useState<DBCommentRow[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
+  const [positions, setPositions] = useState<Record<string, { top: number; left: number }>>({});
+  const [zOrder, setZOrder] = useState<Record<string, number>>({});
+  const zCounterRef = useRef(1);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [dragId, setDragId] = useState<string | null>(null);
+
   // Locale: choose via ?lang=ja | ?lang=en, fallback to browser
   const langParam = params.get("lang");
   const locale = useMemo(() => {
@@ -91,6 +135,76 @@ export default function HostPicture() {
   );
 
   useEffect(() => {
+    if (!items || items.length === 0) return;
+    setPositions((prev) => {
+      const next = { ...prev };
+      items.forEach((c) => {
+        if (!next[c.id]) {
+          const pos = positionFor(c.id);
+          next[c.id] = {
+            top: parseFloat(pos.top),
+            left: parseFloat(pos.left),
+          };
+        }
+      });
+      return next;
+    });
+    setZOrder((prev) => {
+      const next = { ...prev };
+      items.forEach((c) => {
+        if (!next[c.id]) {
+          zCounterRef.current += 1;
+          next[c.id] = zCounterRef.current;
+        }
+      });
+      return next;
+    });
+  }, [items]);
+
+  const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(max, v));
+
+  const getStyleFor = (id: string): React.CSSProperties => {
+    const p = positions[id];
+    const top = p ? `${p.top}%` : positionFor(id).top;
+    const left = p ? `${p.left}%` : positionFor(id).left;
+    const z = zOrder[id] ?? 1;
+    const h = hashToUnit(id);
+    const delay = `${(h * 4).toFixed(2)}s`;       // 0s ~ 4s
+    const duration = `${(5 + h * 3).toFixed(2)}s`; // 5s ~ 8s
+    return {
+      ...bubble,
+      top,
+      left,
+      zIndex: z,
+      cursor: dragId === id ? "grabbing" : "grab",
+      pointerEvents: "auto",
+      animation: `floatY ${duration} ease-in-out ${delay} infinite alternate`,
+      animationFillMode: "both",
+      animationPlayState: dragId === id ? "paused" : "running",
+    };
+  };
+
+  const bringToFront = (id: string) => {
+    setZOrder((prev) => {
+      const next = { ...prev };
+      zCounterRef.current += 1;
+      next[id] = zCounterRef.current;
+      return next;
+    });
+  };
+
+  const updatePosFromPointer = (id: string, clientX: number, clientY: number) => {
+    const el = containerRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const topPct = ((clientY - rect.top) / rect.height) * 100;
+    const leftPct = ((clientX - rect.left) / rect.width) * 100;
+    setPositions((prev) => ({
+      ...prev,
+      [id]: { top: clamp(topPct, 4, 96), left: clamp(leftPct, 4, 96) },
+    }));
+  };
+  useEffect(() => {
     let alive = true;
     (async () => {
       try {
@@ -107,6 +221,21 @@ export default function HostPicture() {
       alive = false;
     };
   }, [photoId]);
+
+  useEffect(() => {
+    (async () => {
+      // fetch saved positions for this photo and merge into state
+      const rows = await listPositionsByPhoto(photoId);
+      if (rows.length === 0) return;
+      setPositions((prev) => {
+        const next = { ...prev };
+        rows.forEach((r) => {
+          next[r.comment_id] = { top: r.top_pct, left: r.left_pct };
+        });
+        return next;
+      });
+    })();
+  }, [photoId, items.length]);
 
   useEffect(() => {
     const channel = supabase
@@ -133,7 +262,7 @@ export default function HostPicture() {
         <Link to="/host" style={{ textDecoration: "none", fontSize: 14 }}>← 一覧に戻る</Link>
       </header>
 
-      <section style={imgWrap}>
+      <section style={imgWrap} ref={containerRef}>
         <img src={src} alt={label} style={img} />
 
         {/* Floating comment bubbles overlay */}
@@ -143,20 +272,55 @@ export default function HostPicture() {
           ) : items.length === 0 ? (
             <div style={emptyBadge}>コメントはまだありません</div>
           ) : (
-            items.map((c) => {
-              const pos = positionFor(c.id);
-              return (
-                <div key={c.id} style={{ ...bubble, top: pos.top, left: pos.left }}>
-                  <div style={{ fontSize: 12, color: "#666", marginBottom: 4 }}>
-                    {dtf.format(new Date(c.created_at))}
-                  </div>
-                  <div style={{ whiteSpace: "pre-wrap", fontSize: 14 }}>{c.text}</div>
+            items.map((c) => (
+              <div
+                key={c.id}
+                style={getStyleFor(c.id)}
+                onPointerDown={(e) => {
+                  bringToFront(c.id);
+                  setDragId(c.id);
+                  (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+                  updatePosFromPointer(c.id, e.clientX, e.clientY);
+                }}
+                onPointerMove={(e) => {
+                  if (dragId === c.id) {
+                    updatePosFromPointer(c.id, e.clientX, e.clientY);
+                  }
+                }}
+                onPointerUp={(e) => {
+                  if (dragId === c.id) {
+                    setDragId(null);
+                    (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+                    // persist current position
+                    const p = positions[c.id];
+                    if (p) {
+                      upsertPosition({
+                        comment_id: c.id,
+                        photo_id: photoId,
+                        top_pct: p.top,
+                        left_pct: p.left,
+                      });
+                    }
+                  }
+                }}
+                onClick={() => bringToFront(c.id)}
+              >
+                <div style={{ fontSize: 12, color: "#666", marginBottom: 4 }}>
+                  {dtf.format(new Date(c.created_at))}
                 </div>
-              );
-            })
+                <div style={{ whiteSpace: "pre-wrap", fontSize: 14 }}>{c.text}</div>
+              </div>
+            ))
           )}
         </div>
       </section>
+      <style>{`
+        @keyframes floatY {
+          0%   { transform: translate(-50%, -50%) translateY(0); }
+          50%  { transform: translate(-50%, -50%) translateY(-6px); }
+          100% { transform: translate(-50%, -50%) translateY(0); }
+        }
+      `}</style>
     </main>
   );
 }
@@ -179,7 +343,7 @@ const img: React.CSSProperties = {
 const overlayLayer: React.CSSProperties = {
   position: "absolute",
   inset: 0,
-  pointerEvents: "none",
+  pointerEvents: "auto",
 };
 
 const bubble: React.CSSProperties = {
@@ -192,6 +356,8 @@ const bubble: React.CSSProperties = {
   border: "1px solid #eaeaea",
   boxShadow: "0 4px 16px rgba(0,0,0,0.12)",
   backdropFilter: "blur(2px)",
+  userSelect: "none",
+  willChange: "transform",
 };
 
 const loadingBadge: React.CSSProperties = {
