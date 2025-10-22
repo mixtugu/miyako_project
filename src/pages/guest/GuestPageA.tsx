@@ -26,7 +26,7 @@ export default function GuestPageA() {
     <main style={{ padding: 16, maxWidth: 560, margin: "0 auto" }}>
       <h1 style={{ marginTop: 0 }}>李鍾根さん</h1>
       <p style={{ color: "#666" }}>
-        以下の5枚の絵の中から1枚を選択してください。選択すると次のページでコメントを残すことができます。
+        あなたが想いを重ねたい絵を一つ選んでください。
       </p>
 
       <section style={grid}>
