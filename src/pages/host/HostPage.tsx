@@ -24,7 +24,7 @@ export default function HostPage() {
 
   return (
     <div style={{ padding: 24, maxWidth: 1200, margin: "0 auto" }}>
-      <h1 style={{ marginTop: 0 }}>タイトル</h1>
+      <h1 style={{ marginTop: 0 }}>Gallery</h1>
       <p style={{ color: "#555" }}>
         あなたは原爆の絵を見て何を感じましたか？その想いを重ねてみませんか？
       </p>
