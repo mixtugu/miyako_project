@@ -21,7 +21,7 @@ export default function Nav() {
     <nav style={wrap}>
       <Link to="/guest/a" style={link}>李鍾根さん</Link>
       <Link to="/guest/b" style={link}>兒玉光雄さん</Link>
-      <Link to="/host" style={link}>HOME</Link>
+      <Link to="/host" style={link}>Gallery</Link>
     </nav>
   );
 }
