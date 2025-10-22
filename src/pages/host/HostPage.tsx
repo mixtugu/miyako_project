@@ -12,8 +12,6 @@ const K_PHOTOS: Photo[] = Array.from({ length: 5 }).map((_, i) => {
   return { id: `k${n}`, url: `/K_${n}.jpg`, label: `絵_${n}` };
 });
 
-
-
 export default function HostPage() {
   const navigate = useNavigate();
 
@@ -31,22 +29,36 @@ export default function HostPage() {
 
       <h3 style={{ margin: "16px 0 8px" }}>李鍾根さん</h3>
       <div style={grid}>
-        {L_PHOTOS.map((p) => (
-          <button key={p.id} style={thumbBtn} onClick={() => handleSelect(p.id)} aria-label={`${p.label}を選択`}>
-            <img src={p.url} alt={p.label} style={thumbImg} />
-            <span style={thumbLabel}>{p.label}</span>
-          </button>
-        ))}
+        {L_PHOTOS.map((p) => {
+          return (
+            <button key={p.id} style={thumbBtn} onClick={() => handleSelect(p.id)} aria-label={`${p.label}を選択`}>
+              <img
+                src={p.url + "?w=400"}
+                alt={p.label}
+                style={thumbImg}
+                loading="lazy"
+              />
+              <span style={thumbLabel}>{p.label}</span>
+            </button>
+          );
+        })}
       </div>
 
       <h3 style={{ margin: "24px 0 8px" }}>兒玉光雄さん</h3>
       <div style={grid}>
-        {K_PHOTOS.map((p) => (
-          <button key={p.id} style={thumbBtn} onClick={() => handleSelect(p.id)} aria-label={`${p.label}を選択`}>
-            <img src={p.url} alt={p.label} style={thumbImg} />
-            <span style={thumbLabel}>{p.label}</span>
-          </button>
-        ))}
+        {K_PHOTOS.map((p) => {
+          return (
+            <button key={p.id} style={thumbBtn} onClick={() => handleSelect(p.id)} aria-label={`${p.label}を選択`}>
+              <img
+                src={p.url + "?w=400"}
+                alt={p.label}
+                style={thumbImg}
+                loading="lazy"
+              />
+              <span style={thumbLabel}>{p.label}</span>
+            </button>
+          );
+        })}
       </div>
     </div>
   );
