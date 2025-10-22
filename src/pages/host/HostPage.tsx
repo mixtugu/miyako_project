@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 
 type Photo = { id: string; url: string; label: string };
 
-const L_PHOTOS: Photo[] = Array.from({ length: 6 }).map((_, i) => {
+const L_PHOTOS: Photo[] = Array.from({ length: 5 }).map((_, i) => {
   const n = i + 1;
   return { id: `l${n}`, url: `/L_${n}.jpg`, label: `絵_${n}` };
 });

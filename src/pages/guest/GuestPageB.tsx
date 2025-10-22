@@ -7,11 +7,11 @@ type Photo = {
 };
 
 const PHOTOS: Photo[] = [
-  { id: "k1", url: "/K_1.jpg", label: "絵 1" },
-  { id: "k2", url: "/K_2.jpg", label: "絵 2" },
-  { id: "k3", url: "/K_3.jpg", label: "絵 3" },
-  { id: "k4", url: "/K_4.jpg", label: "絵 4" },
-  { id: "k5", url: "/K_5.jpg", label: "絵 5" },
+  { id: "k1", url: "/K_1_L.png", label: "絵 1" },
+  { id: "k2", url: "/K_2_L.png", label: "絵 2" },
+  { id: "k3", url: "/K_3_L.png", label: "絵 3" },
+  { id: "k4", url: "/K_4_L.png", label: "絵 4" },
+  { id: "k5", url: "/K_5_L.png", label: "絵 5" },
 ];
 
 export default function GuestPageB() {
@@ -36,12 +36,7 @@ export default function GuestPageB() {
             onClick={() => handleSelect(p.id)}
             aria-label={`${p.label}を選択`}
           >
-            <img
-              src={p.url + "?w=400"}
-              alt={p.label}
-              style={thumbImg}
-              loading="lazy"
-            />
+            <img src={p.url} alt={p.label} style={thumbImg} />
             <span style={thumbLabel}>{p.label}</span>
           </button>
         ))}

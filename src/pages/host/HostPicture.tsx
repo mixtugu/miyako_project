@@ -23,7 +23,7 @@ function labelFromId(id: string): string {
   }
   if (id.startsWith("k")) {
     const n = Number(id.slice(1)) || 1;
-    return `絵 ${n + 6}`;
+    return `絵 ${n + 5}`;
   }
   return "絵";
 }
