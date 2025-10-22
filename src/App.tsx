@@ -23,7 +23,7 @@ export default function App() {
         <Route path="/host/picture" element={<HostPicture />} />
 
         {/* 기본 진입시 게스트 A로 이동 */}
-        <Route path="*" element={<Navigate to="/guest/a" replace />} />
+        <Route path="*" element={<Navigate to="/host" replace />} />
         
       </Routes>
     </>
