@@ -258,7 +258,7 @@ export default function HostPicture() {
   return (
     <main style={{ padding: 24, maxWidth: 1200, margin: "0 auto" }}>
       <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-        <h1 style={{ margin: 0 }}>みんなのコメント — {label}</h1>
+        <h2 style={{ margin: 0 }}>みんなのコメント — {label}</h2>
         <Link to="/host" style={{ textDecoration: "none", fontSize: 14 }}>← 一覧に戻る</Link>
       </header>
 

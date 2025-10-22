@@ -37,7 +37,12 @@ export default function GuestPageA() {
             onClick={() => handleSelect(p.id)}
             aria-label={`${p.label}を選択`}
           >
-            <img src={p.url} alt={p.label} style={thumbImg} />
+            <img
+              src={p.url + "?w=400"}
+              alt={p.label}
+              style={thumbImg}
+              loading="lazy"
+            />
             <span style={thumbLabel}>{p.label}</span>
           </button>
         ))}
