@@ -41,6 +41,64 @@ export default function GuestPageA() {
           </button>
         ))}
       </section>
+      <div style={{ marginTop: 24, textAlign: "center" }}>
+        <a
+          href="https://arcg.is/Oy1D00"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            display: "inline-block",
+            padding: "10px 16px",
+            borderRadius: 8,
+            backgroundColor: "#f5f5f5",
+            color: "#333",
+            textDecoration: "none",
+            fontSize: 15,
+          }}
+        >
+          李鍾根さんストーリーマップ
+                {/* Thumbnail + Story lead */}
+                <section
+                  style={{
+                    display: "flex",
+                    gap: 12,
+                    alignItems: "flex-start",
+                    marginTop: 8,
+                    marginBottom: 12,
+                  }}
+                >
+                  <img
+                    src={"/L.png"}
+                    alt="サムネイル"
+                    style={{
+                      width: 160,
+                      aspectRatio: "4 / 3",
+                      objectFit: "cover",
+                      borderRadius: 12,
+                      border: "1px solid #eee",
+                      display: "block",
+                      flexShrink: 0,
+                    }}
+                  />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <h2
+                      style={{
+                        margin: "0 0 6px 0",
+                        fontSize: 18,
+                        lineHeight: 1.5,
+                        color: "#222",
+                        fontWeight: 800,
+                      }}
+                    >
+                      在日韓国人被爆者 李鍾根　(ｲ・ｼﾞｮﾝｸﾞﾝ)　人生ストーリー
+                    </h2>
+                    <p style={{ margin: 0, color: "#333", lineHeight: 1.7, fontSize: 14 }}>
+                      83歳まで「江川政市」という日本名を名乗ってきた在日韓国人の李鍾根さん。 なぜ、日本名を名乗のり、日本で被爆しなければならなかったのでしょう。そして、どのような人生を送り、どのようなメッセージを後世に伝えたのでしょうか。
+                    </p>
+                  </div>
+                </section>
+        </a>
+      </div>
     </main>
   );
 }

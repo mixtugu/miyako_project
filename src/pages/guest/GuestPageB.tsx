@@ -24,7 +24,9 @@ export default function GuestPageB() {
   return (
     <main style={{ padding: 16, maxWidth: 560, margin: "0 auto" }}>
       <h1 style={{ marginTop: 0 }}>兒玉光雄さん</h1>
-      <p style={{ color: "#666" }}>
+
+      {/* Instruction */}
+      <p style={{ color: "#666", marginTop: 8 }}>
         あなたが想いを重ねたい絵を一つ選んでください。
       </p>
 
@@ -41,6 +43,64 @@ export default function GuestPageB() {
           </button>
         ))}
       </section>
+      <div style={{ marginTop: 24, textAlign: "center" }}>
+        <a
+          href="https://arcg.is/0finmS"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            display: "inline-block",
+            padding: "10px 16px",
+            borderRadius: 8,
+            backgroundColor: "#f5f5f5",
+            color: "#333",
+            textDecoration: "none",
+            fontSize: 15,
+          }}
+        >
+          兒玉光雄さんストーリーマップ
+                {/* Thumbnail + Story lead */}
+                <section
+                  style={{
+                    display: "flex",
+                    gap: 12,
+                    alignItems: "flex-start",
+                    marginTop: 8,
+                    marginBottom: 12,
+                  }}
+                >
+                  <img
+                    src={"/K.png"}
+                    alt="サムネイル"
+                    style={{
+                      width: 160,
+                      aspectRatio: "4 / 3",
+                      objectFit: "cover",
+                      borderRadius: 12,
+                      border: "1px solid #eee",
+                      display: "block",
+                      flexShrink: 0,
+                    }}
+                  />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <h2
+                      style={{
+                        margin: "0 0 6px 0",
+                        fontSize: 18,
+                        lineHeight: 1.5,
+                        color: "#222",
+                        fontWeight: 800,
+                      }}
+                    >
+                      至近距離被爆者・兒玉光雄　ー「人間」として生き抜いた「光」の記憶 ー
+                    </h2>
+                    <p style={{ margin: 0, color: "#333", lineHeight: 1.7, fontSize: 14 }}>
+                      中学１年生（12歳）の時、爆心地から約870メートル地点で被爆し、還暦（60歳）を過ぎてから重複癌と闘ってきた兒玉光雄さん。そのライフストーリーから、私たちが学べることは何でしょうか？
+                    </p>
+                  </div>
+                </section>
+        </a>
+      </div>
     </main>
   );
 }
