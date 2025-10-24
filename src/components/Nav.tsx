@@ -22,6 +22,7 @@ export default function Nav() {
       <Link to="/guest/a" style={link}>李鍾根さん</Link>
       <Link to="/guest/b" style={link}>兒玉光雄さん</Link>
       <Link to="/host" style={link}>Gallery</Link>
+      <a href="https://careful-wrinkle-de0.notion.site/HOME-2956e1cc4225801085a1e4d485e1e07b?pvs=143" style={link}>HOME</a>
     </nav>
   );
 }
