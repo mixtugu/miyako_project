@@ -4,12 +4,12 @@ type Photo = { id: string; url: string; label: string };
 
 const L_PHOTOS: Photo[] = Array.from({ length: 5 }).map((_, i) => {
   const n = i + 1;
-  return { id: `l${n}`, url: `/L_${n}_L.jpg`, label: `絵_${n}` };
+  return { id: `l${n}`, url: `/L_${n}_L.png`, label: `絵_${n}` };
 });
 
 const K_PHOTOS: Photo[] = Array.from({ length: 5 }).map((_, i) => {
   const n = i + 1;
-  return { id: `k${n}`, url: `/K_${n}_L.jpg`, label: `絵_${n}` };
+  return { id: `k${n}`, url: `/K_${n}_L.png`, label: `絵_${n}` };
 });
 
 export default function HostPage() {
