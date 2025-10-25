@@ -24,7 +24,7 @@ export default function HostPage() {
     <div style={{ padding: 24, maxWidth: 1200, margin: "0 auto" }}>
       <h1 style={{ marginTop: 0 }}>Gallery</h1>
       <p style={{ color: "#555" }}>
-        あなたは原爆の絵を見て何を感じましたか？その想いを重ねてみませんか？
+        鑑賞者の想いが重ねられた作品をご覧ください。（ご覧になりたい作品をクリックしてください。）
       </p>
 
       <h3 style={{ margin: "16px 0 8px" }}>李鍾根さん</h3>
