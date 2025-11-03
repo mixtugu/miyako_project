@@ -129,7 +129,7 @@ export default function GuestPageA2() {
     <main style={{ padding: 16, maxWidth: 720, margin: "0 auto" }}>
       <h1 style={{ marginTop: 0 }}>{title}</h1>
       <p style={{ color: "#666" }}>
-        選択した写真を確認してコメントを残してください。
+        この作品を鑑賞してあなたが感じたことをコメント欄に入力してください。
       </p>
 
       {/* 선택한 사진 표시 */}
@@ -153,7 +153,7 @@ export default function GuestPageA2() {
         <label htmlFor="comment" style={label}>コメント</label>
         <textarea
           id="comment"
-          placeholder="内容を入力してください"
+          placeholder="あなたの想い"
           value={text}
           onChange={(e) => setText(e.target.value)}
           style={textarea}

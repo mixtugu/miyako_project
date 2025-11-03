@@ -38,7 +38,7 @@ export default function GuestPageB() {
 
       {/* Instruction */}
       <p style={{ color: "#666", marginTop: 8 }}>
-        あなたが想いを重ねたい絵を一つ選んでください。
+        絵画を一つ選んでください。
       </p>
 
       <section style={grid}>
@@ -55,6 +55,7 @@ export default function GuestPageB() {
           </button>
         ))}
       </section>
+      <p>全ての作品は、広島平和記念資料館所蔵です。</p>
       <div style={{ marginTop: 24, textAlign: "center" }}>
         <a
           href="https://arcg.is/0finmS"
