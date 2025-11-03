@@ -8,8 +8,8 @@ const META: Record<string, { title: string; author: string }> = {
   l1: { title: "「閃光」", author: "曽根沙也佳" },
   l2: { title: "「閃光ののち伏せた場面」", author: "倉重侑季" },
   l3: { title: "「被爆後に立ち上がったところ（荒神橋から見た爆風によってなぎ倒された家々）」", author: "富田真衣" },
-  l4: { title: "「熱線で火傷し機関車のオイルを塗っている」", author: "富田真衣" },
-  l5: { title: "「橋のたもとの被爆者が私を見つめている」", author: "倉重侑季" },
+  l4: { title: "「橋のたもとの被爆者が私を見つめている」", author: "倉重侑季" },
+  l5: { title: "「熱線で火傷し機関車のオイルを塗っている」", author: "富田真衣" },
   // K 系列
   k1: { title: "「倒壊校舎からの脱出」", author: "花岡美優" },
   k2: { title: "「プールサイドの惨劇」", author: "室星理歩" },
