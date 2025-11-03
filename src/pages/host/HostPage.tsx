@@ -1,15 +1,45 @@
 import { useNavigate } from "react-router-dom";
 
-type Photo = { id: string; url: string; label: string };
+type Photo = { id: string; url: string; title: string; author: string };
+
+// 📄 各作品のメタ情報（タイトル / 作家）
+const META: Record<string, { title: string; author: string }> = {
+  // L 系列
+  l1: { title: "「閃光」", author: "曽根沙也佳" },
+  l2: { title: "「閃光ののち伏せた場面」", author: "倉重侑季" },
+  l3: { title: "「被爆後に立ち上がったところ（荒神橋から見た爆風によってなぎ倒された家々）」", author: "富田真衣" },
+  l4: { title: "「熱線で火傷し機関車のオイルを塗っている」", author: "富田真衣" },
+  l5: { title: "「橋のたもとの被爆者が私を見つめている」", author: "倉重侑季" },
+  // K 系列
+  k1: { title: "「倒壊校舎からの脱出」", author: "花岡美優" },
+  k2: { title: "「プールサイドの惨劇」", author: "室星理歩" },
+  k3: { title: "「『友達を助けてくれ！』『火が廻って来たぞ、逃げろ！』」", author: "宮本陽菜" },
+  k4: { title: "「人間襤褸（らんる）の群れの中に」", author: "津村果奈" },
+  k5: { title: "「忘れられない　〜あの眼」", author: "富田葵天" },
+};
 
 const L_PHOTOS: Photo[] = Array.from({ length: 5 }).map((_, i) => {
   const n = i + 1;
-  return { id: `l${n}`, url: `/L_${n}_L.png`, label: `絵_${n}` };
+  const key = `l${n}` as const;
+  const meta = META[key];
+  return {
+    id: key,
+    url: `/L_${n}_L.png`,
+    title: meta?.title ?? `絵_${n}`,
+    author: meta?.author ?? "",
+  };
 });
 
 const K_PHOTOS: Photo[] = Array.from({ length: 5 }).map((_, i) => {
   const n = i + 1;
-  return { id: `k${n}`, url: `/K_${n}_L.png`, label: `絵_${n}` };
+  const key = `k${n}` as const;
+  const meta = META[key];
+  return {
+    id: key,
+    url: `/K_${n}_L.png`,
+    title: meta?.title ?? `絵_${n}`,
+    author: meta?.author ?? "",
+  };
 });
 
 export default function HostPage() {
@@ -31,14 +61,15 @@ export default function HostPage() {
       <div style={grid}>
         {L_PHOTOS.map((p) => {
           return (
-            <button key={p.id} style={thumbBtn} onClick={() => handleSelect(p.id)} aria-label={`${p.label}を選択`}>
+            <button key={p.id} style={thumbBtn} onClick={() => handleSelect(p.id)} aria-label={`${p.title}（${p.author}）を選択`}>
               <img
                 src={p.url + "?w=400"}
-                alt={p.label}
+                alt={p.title}
                 style={thumbImg}
                 loading="lazy"
               />
-              <span style={thumbLabel}>{p.label}</span>
+              <span style={thumbTitle}>{p.title}</span>
+              <span style={thumbAuthor}>{p.author}</span>
             </button>
           );
         })}
@@ -48,14 +79,15 @@ export default function HostPage() {
       <div style={grid}>
         {K_PHOTOS.map((p) => {
           return (
-            <button key={p.id} style={thumbBtn} onClick={() => handleSelect(p.id)} aria-label={`${p.label}を選択`}>
+            <button key={p.id} style={thumbBtn} onClick={() => handleSelect(p.id)} aria-label={`${p.title}（${p.author}）を選択`}>
               <img
                 src={p.url + "?w=400"}
-                alt={p.label}
+                alt={p.title}
                 style={thumbImg}
                 loading="lazy"
               />
-              <span style={thumbLabel}>{p.label}</span>
+              <span style={thumbTitle}>{p.title}</span>
+              <span style={thumbAuthor}>{p.author}</span>
             </button>
           );
         })}
@@ -89,8 +121,19 @@ const thumbImg: React.CSSProperties = {
   display: "block",
 };
 
-const thumbLabel: React.CSSProperties = {
-  padding: "8px 10px",
+const thumbTitle: React.CSSProperties = {
+  padding: "8px 10px 2px",
   fontSize: 14,
-  color: "#333",
+  fontWeight: 700,
+  color: "#222",
+  lineHeight: 1.35,
+  display: "block",
+};
+
+const thumbAuthor: React.CSSProperties = {
+  padding: "0 10px 10px",
+  fontSize: 12,
+  color: "#666",
+  lineHeight: 1.4,
+  display: "block",
 };

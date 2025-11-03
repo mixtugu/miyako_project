@@ -1,18 +1,32 @@
 import { useNavigate } from "react-router-dom";
 
+// 📄 各作品タイトルと作家
+const META: Record<string, { title: string; author: string }> = {
+  l1: { title: "閃光", author: "曽根沙也佳" },
+  l2: { title: "閃光ののち伏せた場面", author: "倉重侑季" },
+  l3: { title: "被爆後に立ち上がったところ（荒神橋から見た爆風によってなぎ倒された家々）", author: "富田真衣" },
+  l4: { title: "熱線で火傷し機関車のオイルを塗っている", author: "富田真衣" },
+  l5: { title: "橋のたもとの被爆者が私を見つめている", author: "倉重侑季" },
+};
+
 type Photo = {
   id: string;
   url: string;
-  label: string;
+  title: string;
+  author: string;
 };
 
-const PHOTOS: Photo[] = [
-  { id: "l1", url: "/L_1_L.png", label: "絵 1" },
-  { id: "l2", url: "/L_2_L.png", label: "絵 2" },
-  { id: "l3", url: "/L_3_L.png", label: "絵 3" },
-  { id: "l4", url: "/L_4_L.png", label: "絵 4" },
-  { id: "l5", url: "/L_5_L.png", label: "絵 5" },
-];
+const PHOTOS: Photo[] = Array.from({ length: 5 }).map((_, i) => {
+  const n = i + 1;
+  const key = `l${n}` as const;
+  const meta = META[key];
+  return {
+    id: key,
+    url: `/L_${n}_L.png`,
+    title: meta?.title ?? `絵 ${n}`,
+    author: meta?.author ?? "",
+  };
+});
 
 export default function GuestPageA() {
   const navigate = useNavigate();
@@ -25,8 +39,6 @@ export default function GuestPageA() {
     <main style={{ padding: 16, maxWidth: 560, margin: "0 auto" }}>
       <h1 style={{ marginTop: 0 }}>李鍾根さん</h1>
       <p style={{ color: "#666" }}>
-        全ての作品は、広島平和記念資料館所蔵です。
-        <br />
         あなたが想いを重ねたい絵を一つ選んでください。
       </p>
 
@@ -36,10 +48,11 @@ export default function GuestPageA() {
             key={p.id}
             style={thumbBtn}
             onClick={() => handleSelect(p.id)}
-            aria-label={`${p.label}を選択`}
+            aria-label={`${p.title}を選択`}
           >
-            <img src={p.url} alt={p.label} style={thumbImg} />
-            <span style={thumbLabel}>{p.label}</span>
+            <img src={p.url} alt={p.title} style={thumbImg} />
+            <span style={thumbTitle}>作品名「{p.title}」</span>
+            <span style={thumbAuthor}>{p.author}</span>
           </button>
         ))}
       </section>
@@ -131,8 +144,19 @@ const thumbImg: React.CSSProperties = {
   display: "block",
 };
 
-const thumbLabel: React.CSSProperties = {
-  padding: "8px 10px",
+const thumbTitle: React.CSSProperties = {
+  padding: "8px 10px 2px",
   fontSize: 14,
-  color: "#333",
+  fontWeight: 700,
+  color: "#222",
+  lineHeight: 1.35,
+  display: "block",
+};
+
+const thumbAuthor: React.CSSProperties = {
+  padding: "0 10px 8px",
+  fontSize: 13,
+  color: "#666",
+  lineHeight: 1.4,
+  display: "block",
 };

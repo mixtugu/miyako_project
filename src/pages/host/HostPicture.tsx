@@ -278,15 +278,17 @@ export default function HostPicture() {
   return (
     <main style={{ padding: 24, maxWidth: 1200, margin: "0 auto" }}>
       <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-        <h2 style={{ margin: 0 }}>みんなのコメント — {label}</h2>
+        <h2 style={{ margin: 0 }}>みんなのコメント — {descriptionText}</h2>
         <Link to="/host" style={{ textDecoration: "none", fontSize: 14 }}>← 一覧に戻る</Link>
       </header>
 
-      <section style={imgWrap} ref={containerRef}>
+      <section style={imgWrap}>
         <img src={src} alt={label} style={img} />
+      </section>
 
-        {/* Floating comment bubbles overlay */}
-        <div style={overlayLayer}>
+      <section style={commentsWrap}>
+        {/* コメント配置ステージ（少し内側に縮小） */}
+        <div style={commentStage} ref={containerRef}>
           {loading ? (
             <div style={loadingBadge}>読み込み中...</div>
           ) : items.length === 0 ? (
@@ -311,7 +313,6 @@ export default function HostPicture() {
                   if (dragId === c.id) {
                     setDragId(null);
                     (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
-                    // persist current position
                     const p = positions[c.id];
                     if (p) {
                       upsertPosition({
@@ -325,10 +326,14 @@ export default function HostPicture() {
                 }}
                 onClick={() => bringToFront(c.id)}
               >
-                <div style={{ fontSize: 12, color: "#666", marginBottom: 4 }}>
-                  {dtf.format(new Date(c.created_at))}
+                <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
+                  <img
+                    src={(new Date(c.created_at).getMinutes() % 2 === 0) ? "/green.png" : "/pink.png"}
+                    alt="comment marker"
+                    style={{ width: 43, height: 43, display: "block", flex: "0 0 auto", marginTop: -13 }}
+                  />
+                  <div style={{ whiteSpace: "pre-wrap", fontSize: 17, color: "#222" }}>{c.text}</div>
                 </div>
-                <div style={{ whiteSpace: "pre-wrap", fontSize: 14 }}>{c.text}</div>
               </div>
             ))
           )}
@@ -338,7 +343,11 @@ export default function HostPicture() {
       {/* 写真の説明 */}
       {descriptionText && (
         <section style={descWrap}>
-          <p style={descText}>{descriptionText}</p>
+          <p style={descText}>
+            広島平和記念資料館所蔵　
+            {' 　'}
+            {descriptionText}
+          </p>
         </section>
       )}
     </main>
@@ -352,6 +361,26 @@ const imgWrap: React.CSSProperties = {
   overflow: "hidden",
   background: "#fafafa",
   minHeight: 240,
+};
+
+const commentsWrap: React.CSSProperties = {
+  position: "relative",
+  border: "1px dashed #FFF",
+  borderRadius: 12,
+  overflow: "hidden",
+  backgroundImage: 'url("/image.png")',
+  backgroundSize: "contain",
+  backgroundRepeat: "no-repeat",
+  backgroundPosition: "center",
+  minHeight: 0,
+  aspectRatio: "4 / 4",
+  marginTop: 12,
+};
+
+const commentStage: React.CSSProperties = {
+  position: "absolute",
+  inset: "12%",
+  pointerEvents: "auto",
 };
 
 const img: React.CSSProperties = {
@@ -370,12 +399,12 @@ const bubble: React.CSSProperties = {
   position: "absolute",
   transform: "translate(-50%, -50%)",
   maxWidth: "40%",
-  padding: 10,
+  padding: 0,
   borderRadius: 12,
-  background: "rgba(255,255,255,0.88)",
-  border: "1px solid #eaeaea",
-  boxShadow: "0 4px 16px rgba(0,0,0,0.12)",
-  backdropFilter: "blur(2px)",
+  background: "transparent",
+  border: "none",
+  boxShadow: "none",
+  backdropFilter: "none",
   userSelect: "none",
   willChange: "transform",
 };

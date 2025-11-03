@@ -93,7 +93,7 @@ export default function GuestPageA2() {
   const title = useMemo(() => {
     const order = ["l1", "l2", "l3", "l4", "l5", "l6"];
     const idx = order.indexOf(photoId) + 1;
-    return `李鍾根さん ${idx || 1}`;
+    return descriptionText;
   }, [photoId]);
 
   useEffect(() => {
@@ -140,7 +140,11 @@ export default function GuestPageA2() {
       {/* 사진 설명 */}
       {descriptionText && (
         <section style={descWrap}>
-          <p style={descText}>{descriptionText}</p>
+          <p style={descText}>
+            広島平和記念資料館所蔵　
+            {' 　'}
+            {descriptionText}
+          </p>
         </section>
       )}
 

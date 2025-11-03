@@ -1,17 +1,28 @@
 import { useNavigate } from "react-router-dom";
 
+
 type Photo = {
   id: string;
   url: string;
-  label: string;
+  title: string;
+  author: string;
+};
+
+// 📄 各作品メタ情報（タイトル / 作家）—日本語のみ
+const META: Record<string, { title: string; author: string }> = {
+  k1: { title: "「倒壊校舎からの脱出」", author: "花岡美優" },
+  k2: { title: "「プールサイドの惨劇」", author: "室星理歩" },
+  k3: { title: "「『友達を助けてくれ！』『火が廻って来たぞ、逃げろ！』」", author: "宮本陽菜" },
+  k4: { title: "「人間襤褸（らんる）の群れの中に」", author: "津村果奈" },
+  k5: { title: "「忘れられない　〜あの眼」", author: "富田葵天" },
 };
 
 const PHOTOS: Photo[] = [
-  { id: "k1", url: "/K_1_L.png", label: "絵 1" },
-  { id: "k2", url: "/K_2_L.png", label: "絵 2" },
-  { id: "k3", url: "/K_3_L.png", label: "絵 3" },
-  { id: "k4", url: "/K_4_L.png", label: "絵 4" },
-  { id: "k5", url: "/K_5_L.png", label: "絵 5" },
+  { id: "k1", url: "/K_1_L.png", title: META.k1.title, author: META.k1.author },
+  { id: "k2", url: "/K_2_L.png", title: META.k2.title, author: META.k2.author },
+  { id: "k3", url: "/K_3_L.png", title: META.k3.title, author: META.k3.author },
+  { id: "k4", url: "/K_4_L.png", title: META.k4.title, author: META.k4.author },
+  { id: "k5", url: "/K_5_L.png", title: META.k5.title, author: META.k5.author },
 ];
 
 export default function GuestPageB() {
@@ -27,8 +38,6 @@ export default function GuestPageB() {
 
       {/* Instruction */}
       <p style={{ color: "#666", marginTop: 8 }}>
-        全ての作品は、広島平和記念資料館所蔵です。
-        <br />
         あなたが想いを重ねたい絵を一つ選んでください。
       </p>
 
@@ -38,10 +47,11 @@ export default function GuestPageB() {
             key={p.id}
             style={thumbBtn}
             onClick={() => handleSelect(p.id)}
-            aria-label={`${p.label}を選択`}
+            aria-label={`${p.title}（${p.author}）を選択`}
           >
-            <img src={p.url} alt={p.label} style={thumbImg} />
-            <span style={thumbLabel}>{p.label}</span>
+            <img src={p.url} alt={p.title} style={thumbImg} />
+            <span style={thumbTitle}>{p.title}</span>
+            <span style={thumbAuthor}>{p.author}</span>
           </button>
         ))}
       </section>
@@ -133,8 +143,19 @@ const thumbImg: React.CSSProperties = {
   display: "block",
 };
 
-const thumbLabel: React.CSSProperties = {
-  padding: "8px 10px",
+const thumbTitle: React.CSSProperties = {
+  padding: "8px 10px 2px",
   fontSize: 14,
-  color: "#333",
+  fontWeight: 700,
+  color: "#222",
+  lineHeight: 1.35,
+  display: "block",
+};
+
+const thumbAuthor: React.CSSProperties = {
+  padding: "0 10px 10px",
+  fontSize: 12,
+  color: "#666",
+  lineHeight: 1.4,
+  display: "block",
 };
