@@ -100,8 +100,8 @@ export default function GuestPageA2() {
   const [saving, setSaving] = useState(false);
 
   const title = useMemo(() => {
-    const order = ["p1", "p2", "p3", "p4", "p5"] as const;
-    const idx = order.indexOf(photoId) + 1;
+    //const order = ["p1", "p2", "p3", "p4", "p5"] as const;
+    //const idx = order.indexOf(photoId) + 1;
     return descriptionText;
   }, [photoId]);
 

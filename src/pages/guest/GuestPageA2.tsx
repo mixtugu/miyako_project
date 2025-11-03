@@ -91,8 +91,8 @@ export default function GuestPageA2() {
   const [saving, setSaving] = useState(false);
 
   const title = useMemo(() => {
-    const order = ["l1", "l2", "l3", "l4", "l5", "l6"];
-    const idx = order.indexOf(photoId) + 1;
+    //const order = ["l1", "l2", "l3", "l4", "l5", "l6"];
+    //const idx = order.indexOf(photoId) + 1;
     return descriptionText;
   }, [photoId]);
 

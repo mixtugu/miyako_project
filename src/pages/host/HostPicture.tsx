@@ -141,14 +141,14 @@ export default function HostPicture() {
     return navigator.language?.startsWith("ja") ? "ja-JP" : "en-US";
   }, [langParam]);
 
-  const dtf = useMemo(
-    () =>
-      new Intl.DateTimeFormat(locale, {
-        dateStyle: "medium",
-        timeStyle: "short",
-      }),
-    [locale]
-  );
+  // const dtf = useMemo(
+  //   () =>
+  //     new Intl.DateTimeFormat(locale, {
+  //       dateStyle: "medium",
+  //       timeStyle: "short",
+  //     }),
+  //   [locale]
+  // );
 
   // 説明文の言語選択と取得
   const uiLang = locale.startsWith("ja") ? "ja" : "en";
@@ -389,11 +389,11 @@ const img: React.CSSProperties = {
   objectFit: "contain",
 };
 
-const overlayLayer: React.CSSProperties = {
-  position: "absolute",
-  inset: 0,
-  pointerEvents: "auto",
-};
+// const overlayLayer: React.CSSProperties = {
+//   position: "absolute",
+//   inset: 0,
+//   pointerEvents: "auto",
+// };
 
 const bubble: React.CSSProperties = {
   position: "absolute",
