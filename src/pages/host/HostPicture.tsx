@@ -28,6 +28,22 @@ function labelFromId(id: string): string {
   return "絵";
 }
 
+// 📄 写真別の説明文（ja/en）—必要に応じて編集してください
+const DESCRIPTIONS: Record<string, { ja: string; en: string }> = {
+  // L 系列
+  l1: { ja: "作品名「閃光」曽根沙也佳", en: "作品名「閃光」曽根沙也佳" },
+  l2: { ja: "作品名「閃光ののち伏せた場面」倉重侑季", en: "作品名「閃光ののち伏せた場面」倉重侑季" },
+  l3: { ja: "作品名「被爆後に立ち上がったところ（荒神橋から見た爆風によってなぎ倒された家々）」富田真衣", en: "作品名「被爆後に立ち上がったところ（荒神橋から見た爆風によってなぎ倒された家々）」富田真衣" },
+  l4: { ja: "作品名「熱線で火傷し機関車のオイルを塗っている」富田真衣", en: "作品名「熱線で火傷し機関車のオイルを塗っている」富田真衣" },
+  l5: { ja: "作品名「橋のたもとの被爆者が私を見つめている」倉重侑季", en: "作品名「橋のたもとの被爆者が私を見つめている」倉重侑季" },
+  // K 系列
+  k1: { ja: "作品名「倒壊校舎からの脱出」花岡美優", en: "作品名「倒壊校舎からの脱出」花岡美優" },
+  k2: { ja: "作品名「プールサイドの惨劇」室星理歩", en: "作品名「プールサイドの惨劇」室星理歩" },
+  k3: { ja: "作品名「『友達を助けてくれ！』『火が廻って来たぞ、逃げろ！』」宮本陽菜", en: "作品名「『友達を助けてくれ！』『火が廻って来たぞ、逃げろ！』」宮本陽菜" },
+  k4: { ja: "作品名「人間襤褸（らんる）の群れの中に」津村果奈", en: "作品名「人間襤褸（らんる）の群れの中に」津村果奈" },
+  k5: { ja: "作品名「忘れられない　〜あの眼」富田葵天", en: "作品名「忘れられない　〜あの眼」富田葵天" },
+};
+
 type DBCommentRow = {
   id: string;
   photo_id: string;
@@ -133,6 +149,10 @@ export default function HostPicture() {
       }),
     [locale]
   );
+
+  // 説明文の言語選択と取得
+  const uiLang = locale.startsWith("ja") ? "ja" : "en";
+  const descriptionText = (DESCRIPTIONS[photoId]?.[uiLang] ?? "").trim();
 
   useEffect(() => {
     if (!items || items.length === 0) return;
@@ -314,13 +334,13 @@ export default function HostPicture() {
           )}
         </div>
       </section>
-      <style>{`
-        @keyframes floatY {
-          0%   { transform: translate(-50%, -50%) translateY(0); }
-          50%  { transform: translate(-50%, -50%) translateY(-6px); }
-          100% { transform: translate(-50%, -50%) translateY(0); }
-        }
-      `}</style>
+
+      {/* 写真の説明 */}
+      {descriptionText && (
+        <section style={descWrap}>
+          <p style={descText}>{descriptionText}</p>
+        </section>
+      )}
     </main>
   );
 }
@@ -382,4 +402,20 @@ const emptyBadge: React.CSSProperties = {
   border: "1px solid #eaeaea",
   borderRadius: 10,
   padding: "6px 10px",
+};
+
+const descWrap: React.CSSProperties = {
+  marginTop: 12,
+  padding: "10px 12px",
+  borderRadius: 10,
+  background: "#f6f7f8",
+  border: "1px solid #eee",
+};
+
+const descText: React.CSSProperties = {
+  margin: 0,
+  whiteSpace: "pre-wrap",
+  color: "#333",
+  fontSize: 14,
+  lineHeight: 1.6,
 };

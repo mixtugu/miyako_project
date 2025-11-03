@@ -52,10 +52,28 @@ const PHOTOS = {
   p5: "/K_5.jpg",
 } as const;
 
+// 入力パラメータの写真IDを正規化（例: k1 → p1、未知は p1）
+function normalizePhotoId(id: string): keyof typeof PHOTOS {
+  const m = id.toLowerCase().match(/^k([1-5])$/);
+  if (m) return (`p${m[1]}` as keyof typeof PHOTOS);
+  const key = id as keyof typeof PHOTOS;
+  return PHOTOS[key] ? key : 'p1';
+}
+
+// 📄 写真別の説明文（ja/en）—必要に応じて編集してください
+const DESCRIPTIONS: Record<string, { ja: string; en: string }> = {
+  p1: { ja: "作品名「倒壊校舎からの脱出」花岡美優", en: "作品名「倒壊校舎からの脱出」花岡美優" },
+  p2: { ja: "作品名「プールサイドの惨劇」室星理歩", en: "作品名「プールサイドの惨劇」室星理歩" },
+  p3: { ja: "作品名「『友達を助けてくれ！』『火が廻って来たぞ、逃げろ！』」宮本陽菜", en: "作品名「『友達を助けてくれ！』『火が廻って来たぞ、逃げろ！』」宮本陽菜" },
+  p4: { ja: "作品名「人間襤褸（らんる）の群れの中に」津村果奈", en: "作品名「人間襤褸（らんる）の群れの中に」津村果奈" },
+  p5: { ja: "作品名「忘れられない　〜あの眼」富田葵天", en: "作品名「忘れられない　〜あの眼」富田葵天" },
+};
+
 export default function GuestPageA2() {
   const [params] = useSearchParams();
-  const photoId = params.get("photo") ?? "p1";
-  const photoUrl = (PHOTOS as Record<string, string>)[photoId] ?? PHOTOS.p1;
+  const rawId = params.get("photo") ?? "p1";
+  const photoId = normalizePhotoId(rawId);
+  const photoUrl = PHOTOS[photoId];
 
   // Locale: choose via ?lang=ja | ?lang=en, fallback to browser
   const langParam = params.get("lang");
@@ -74,12 +92,15 @@ export default function GuestPageA2() {
     [locale]
   );
 
+  const uiLang = locale.startsWith("ja") ? "ja" : "en";
+  const descriptionText = (DESCRIPTIONS[photoId]?.[uiLang] ?? "").trim();
+
   const [text, setText] = useState("");
   const [items, setItems] = useState<CommentItem[]>([]);
   const [saving, setSaving] = useState(false);
 
   const title = useMemo(() => {
-    const order = ["k1", "k2", "k3", "k4", "k5"];
+    const order = ["p1", "p2", "p3", "p4", "p5"] as const;
     const idx = order.indexOf(photoId) + 1;
     return `兒玉光雄さん ${idx || 1}`;
   }, [photoId]);
@@ -124,6 +145,13 @@ export default function GuestPageA2() {
       <section style={imgWrap}>
         <img src={photoUrl} alt="選択した写真" style={img} />
       </section>
+
+      {/* 写真の説明 */}
+      {descriptionText && (
+        <section style={descWrap}>
+          <p style={descText}>{descriptionText}</p>
+        </section>
+      )}
 
       {/* 댓글 입력 */}
       <section style={form}>
@@ -216,4 +244,20 @@ const commentItem: React.CSSProperties = {
   borderRadius: 10,
   border: "1px solid #eee",
   background: "#fff",
+};
+
+const descWrap: React.CSSProperties = {
+  marginTop: 8,
+  padding: "10px 12px",
+  borderRadius: 10,
+  background: "#f6f7f8",
+  border: "1px solid #eee",
+};
+
+const descText: React.CSSProperties = {
+  margin: 0,
+  whiteSpace: "pre-wrap",
+  color: "#333",
+  fontSize: 14,
+  lineHeight: 1.6,
 };

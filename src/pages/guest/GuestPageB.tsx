@@ -27,6 +27,8 @@ export default function GuestPageB() {
 
       {/* Instruction */}
       <p style={{ color: "#666", marginTop: 8 }}>
+        全ての作品は、広島平和記念資料館所蔵です。
+        <br />
         あなたが想いを重ねたい絵を一つ選んでください。
       </p>
 

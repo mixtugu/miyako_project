@@ -50,8 +50,16 @@ const PHOTOS = {
   l3: "/L_3.jpg",
   l4: "/L_4.jpg",
   l5: "/L_5.jpg",
-  l6: "/L_6.jpg",
 } as const;
+
+// 📄 사진별 설명 (ja/en). 필요에 따라 문구를 수정하세요.
+const DESCRIPTIONS: Record<string, { ja: string; en: string }> = {
+  l1: { ja: "作品名「閃光」曽根沙也佳", en: "作品名「閃光」曽根沙也佳" },
+  l2: { ja: "作品名「閃光ののち伏せた場面」倉重侑季", en: "作品名「閃光ののち伏せた場面」倉重侑季" },
+  l3: { ja: "作品名「被爆後に立ち上がったところ（荒神橋から見た爆風によってなぎ倒された家々）」富田真衣", en: "作品名「被爆後に立ち上がったところ（荒神橋から見た爆風によってなぎ倒された家々）」富田真衣" },
+  l4: { ja: "作品名「熱線で火傷し機関車のオイルを塗っている」富田真衣", en: "作品名「熱線で火傷し機関車のオイルを塗っている」富田真衣" },
+  l5: { ja: "作品名「橋のたもとの被爆者が私を見つめている」倉重侑季", en: "作品名「橋のたもとの被爆者が私を見つめている」倉重侑季" },
+};
 
 export default function GuestPageA2() {
   const [params] = useSearchParams();
@@ -74,6 +82,9 @@ export default function GuestPageA2() {
       }),
     [locale]
   );
+
+  const uiLang = locale.startsWith("ja") ? "ja" : "en";
+  const descriptionText = (DESCRIPTIONS[photoId]?.[uiLang] ?? "").trim();
 
   const [text, setText] = useState("");
   const [items, setItems] = useState<CommentItem[]>([]);
@@ -125,6 +136,13 @@ export default function GuestPageA2() {
       <section style={imgWrap}>
         <img src={photoUrl} alt="選択した写真" style={img} />
       </section>
+
+      {/* 사진 설명 */}
+      {descriptionText && (
+        <section style={descWrap}>
+          <p style={descText}>{descriptionText}</p>
+        </section>
+      )}
 
       {/* 댓글 입력 */}
       <section style={form}>
@@ -217,4 +235,20 @@ const commentItem: React.CSSProperties = {
   borderRadius: 10,
   border: "1px solid #eee",
   background: "#fff",
+};
+
+const descWrap: React.CSSProperties = {
+  marginTop: 8,
+  padding: "10px 12px",
+  borderRadius: 10,
+  background: "#f6f7f8",
+  border: "1px solid #eee",
+};
+
+const descText: React.CSSProperties = {
+  margin: 0,
+  whiteSpace: "pre-wrap",
+  color: "#333",
+  fontSize: 14,
+  lineHeight: 1.6,
 };

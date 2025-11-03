@@ -25,6 +25,8 @@ export default function GuestPageA() {
     <main style={{ padding: 16, maxWidth: 560, margin: "0 auto" }}>
       <h1 style={{ marginTop: 0 }}>李鍾根さん</h1>
       <p style={{ color: "#666" }}>
+        全ての作品は、広島平和記念資料館所蔵です。
+        <br />
         あなたが想いを重ねたい絵を一つ選んでください。
       </p>
 
