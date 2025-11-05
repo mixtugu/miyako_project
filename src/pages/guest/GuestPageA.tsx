@@ -88,7 +88,7 @@ export default function GuestPageA() {
             aria-label={`${p.title}を選択`}
           >
             <img src={p.url} alt={p.title} style={thumbImg} />
-            <span style={thumbTitle}>「{p.title}」</span>
+            <span style={thumbTitle}>{p.title}</span>
             <span style={thumbAuthor}>{p.author}</span>
           </button>
         ))}

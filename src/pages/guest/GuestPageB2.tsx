@@ -96,6 +96,33 @@ export default function GuestPageA2() {
   const uiLang = locale.startsWith("ja") ? "ja" : "en";
   const descriptionText = (DESCRIPTIONS[photoId]?.[uiLang] ?? "").trim();
 
+  const TEXT = {
+    ja: {
+      guidance1: "この作品を鑑賞してあなたが感じたことをコメント欄に入力してください。",
+      guidance2: "思いやりと敬意をもってご感想をお寄せください。",
+      guidance3: "この空間は共感と創造を大切にしています。誹謗中傷や他者を傷つける内容はお控えください。",
+      labelComment: "コメント",
+      placeholder: "あなたの想い",
+      save: "コメントを保存",
+      saving: "保存中...",
+      goHost: "想いが重ねられた作品をご覧になりたい方はこちらへ",
+      commentList: "コメント一覧",
+      noComment: "まだコメントがありません。",
+    },
+    en: {
+      guidance1: "Please share your thoughts and feelings about this artwork in the comment box below.",
+      guidance2: "We kindly ask that you write with compassion and respect.",
+      guidance3: "This space values empathy and creativity — please refrain from posting any hurtful or disrespectful comments.",
+      labelComment: "Comment",
+      placeholder: "Your thoughts and feelings",
+      save: "Save",
+      saving: "Saving...",
+      goHost: "See works with shared comments here",
+      commentList: "Comments",
+      noComment: "No comments yet.",
+    },
+  } as const;
+
   const [text, setText] = useState("");
   const [items, setItems] = useState<CommentItem[]>([]);
   const [saving, setSaving] = useState(false);
@@ -139,12 +166,12 @@ export default function GuestPageA2() {
     <main style={{ padding: 16, maxWidth: 720, margin: "0 auto" }}>
       <h1 style={{ marginTop: 0 }}>{title}</h1>
       <p style={{ color: "#666" }}>
-        この作品を鑑賞してあなたが感じたことをコメント欄に入力してください。
+        {TEXT[uiLang].guidance1}
         <br />
         <br />
-        思いやりと敬意をもってご感想をお寄せください。
+        {TEXT[uiLang].guidance2}
         <br />
-        この空間は共感と創造を大切にしています。誹謗中傷や他者を傷つける内容はお控えください。
+        {TEXT[uiLang].guidance3}
       </p>
 
       {/* 선택한 사진 표시 */}
@@ -165,10 +192,10 @@ export default function GuestPageA2() {
 
       {/* 댓글 입력 */}
       <section style={form}>
-        <label htmlFor="comment" style={label}>コメント</label>
+        <label htmlFor="comment" style={label}>{TEXT[uiLang].labelComment}</label>
         <textarea
           id="comment"
-          placeholder="あなたの想い"
+          placeholder={TEXT[uiLang].placeholder}
           value={text}
           onChange={(e) => setText(e.target.value)}
           style={textarea}
@@ -179,7 +206,7 @@ export default function GuestPageA2() {
           disabled={saving || !text.trim()}
           style={primaryBtn}
         >
-          {saving ? "保存中..." : "コメントを保存"}
+          {saving ? TEXT[uiLang].saving : TEXT[uiLang].save}
         </button>
         <button
           type="button"
@@ -190,15 +217,15 @@ export default function GuestPageA2() {
           style={secondaryBtn}
           aria-label={`ホスト画面で ${photoId} を表示（/host/picture?photo=k#）`}
         >
-          想いが重ねられた作品をご覧になりたい方はこちらへ
+          {TEXT[uiLang].goHost}
         </button>
       </section>
 
       {/* 댓글 목록 */}
       <section style={{ marginTop: 20 }}>
-        <h3 style={{ margin: "12px 0" }}>コメント一覧</h3>
+        <h3 style={{ margin: "12px 0" }}>{TEXT[uiLang].commentList}</h3>
         {items.length === 0 ? (
-          <p style={{ color: "#888" }}>まだコメントがありません。</p>
+          <p style={{ color: "#888" }}>{TEXT[uiLang].noComment}</p>
         ) : (
           <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "grid", gap: 10 }}>
             {items.map((c) => (

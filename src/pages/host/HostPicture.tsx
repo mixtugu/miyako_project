@@ -102,8 +102,8 @@ function positionFor(id: string): { top: string; left: string } {
   // spread comments within safe margins (5%~85%) to avoid edges
   const h1 = hashToUnit(id);
   const h2 = hashToUnit(id + "x");
-  const topPct = 4 + h1 * 92;   // 4% ~ 96%
-  const leftPct = 4 + h2 * 92;  // 4% ~ 96%
+  const topPct = 4 + h1 * 94;   // 4% ~ 96%
+  const leftPct = 4 + h2 * 94;  // 4% ~ 96%
   return { top: `${topPct.toFixed(2)}%`, left: `${leftPct.toFixed(2)}%` };
 }
 
@@ -132,6 +132,49 @@ export default function HostPicture() {
   const zCounterRef = useRef(1);
   const containerRef = useRef<HTMLDivElement>(null);
   const [dragId, setDragId] = useState<string | null>(null);
+
+  // コメント登録順（作成日時の昇順）に基づいて色決定用のランクを作る
+  const rankById = useMemo<Record<string, number>>(() => {
+    if (!items || items.length === 0) return {};
+    const asc = [...items].sort((a, b) => +new Date(a.created_at) - +new Date(b.created_at));
+    const map: Record<string, number> = {};
+    asc.forEach((row, idx) => {
+      map[row.id] = idx; // 0,1,2,3,... (登録順)
+    });
+    return map;
+  }, [items]);
+
+  const iconForRank = (rank?: number) => {
+    const order = ["/pink.png", "/yellow.png", "/green.png", "/blue.png"] as const;
+    if (rank === undefined || rank === null || Number.isNaN(rank)) return order[0];
+    return order[rank % order.length];
+  };
+
+  const bgForRank = (rank?: number): React.CSSProperties => {
+    const palette = [
+      { rgb: [255, 105, 180] },  // pink
+      { rgb: [255, 215, 0] },    // yellow
+      { rgb: [76, 175, 80] },    // green
+      { rgb: [33, 150, 243] },   // blue
+    ] as const;
+    const pick = (rank === undefined || rank === null || Number.isNaN(rank)) ? palette[0] : palette[rank % palette.length];
+    const [r, g, b] = pick.rgb;
+    return {
+      backgroundColor: `rgba(${r}, ${g}, ${b}, 0.16)`,
+      border: `1px solid rgba(${r}, ${g}, ${b}, 0.45)`,
+    };
+  };
+
+const pillBase: React.CSSProperties = {
+  display: "flex",
+  alignItems: "flex-start",
+  gap: 8,
+  padding: "8px 12px",
+  borderRadius: 9999,
+  boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+  backdropFilter: "saturate(120%)",
+  transform: "translateX(40%)",
+};
 
   // Locale: choose via ?lang=ja | ?lang=en, fallback to browser
   const langParam = params.get("lang");
@@ -326,9 +369,9 @@ export default function HostPicture() {
                 }}
                 onClick={() => bringToFront(c.id)}
               >
-                <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
+                <div style={{ ...pillBase, ...bgForRank(rankById[c.id]) }}>
                   <img
-                    src={(new Date(c.created_at).getMinutes() % 2 === 0) ? "/green.png" : "/pink.png"}
+                    src={iconForRank(rankById[c.id])}
                     alt="comment marker"
                     style={{ width: 43, height: 43, display: "block", flex: "0 0 auto", marginTop: -13 }}
                   />
