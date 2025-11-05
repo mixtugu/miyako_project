@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "../../lib/supabaseClient";
 
 type CommentItem = {
@@ -71,6 +71,7 @@ const DESCRIPTIONS: Record<string, { ja: string; en: string }> = {
 
 export default function GuestPageA2() {
   const [params] = useSearchParams();
+  const navigate = useNavigate();
   const rawId = params.get("photo") ?? "p1";
   const photoId = normalizePhotoId(rawId);
   const photoUrl = PHOTOS[photoId];
@@ -180,6 +181,17 @@ export default function GuestPageA2() {
         >
           {saving ? "保存中..." : "コメントを保存"}
         </button>
+        <button
+          type="button"
+          onClick={() => {
+            const outId = /^k[1-5]$/i.test(rawId) ? rawId.toLowerCase() : photoId.replace(/^p/, "k");
+            navigate(`/host/picture?photo=${outId}`);
+          }}
+          style={secondaryBtn}
+          aria-label={`ホスト画面で ${photoId} を表示（/host/picture?photo=k#）`}
+        >
+          想いが重ねられた作品をご覧になりたい方はこちらへ
+        </button>
       </section>
 
       {/* 댓글 목록 */}
@@ -243,6 +255,18 @@ const primaryBtn: React.CSSProperties = {
   border: "none",
   background: "black",
   color: "white",
+  fontWeight: 700,
+  fontSize: 16,
+  cursor: "pointer",
+};
+
+const secondaryBtn: React.CSSProperties = {
+  width: "100%",
+  padding: "12px 14px",
+  borderRadius: 10,
+  border: "1px solid black",
+  background: "white",
+  color: "black",
   fontWeight: 700,
   fontSize: 16,
   cursor: "pointer",

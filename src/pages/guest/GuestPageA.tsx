@@ -1,12 +1,30 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 // 📄 各作品タイトルと作家
-const META: Record<string, { title: string; author: string }> = {
-  l1: { title: "閃光", author: "曽根沙也佳" },
-  l2: { title: "閃光ののち伏せた場面", author: "倉重侑季" },
-  l3: { title: "被爆後に立ち上がったところ（荒神橋から見た爆風によってなぎ倒された家々）", author: "富田真衣" },
-  l4: { title: "橋のたもとの被爆者が私を見つめている", author: "倉重侑季" },
-  l5: { title: "熱線で火傷し機関車のオイルを塗っている", author: "富田真衣" },
+const META: Record<string, { title: { ja: string; en: string }; author: { ja: string; en: string } }> = {
+  l1: {
+    title: { ja: "閃光", en: "A Flash of Light" },
+    author: { ja: "曽根沙也佳", en: "Sayaka Sone" },
+  },
+  l2: {
+    title: { ja: "閃光ののち伏せた場面", en: "Lying Face Down Immediately After a Flash of Light" },
+    author: { ja: "倉重侑季", en: "Yuki Kurashige" },
+  },
+  l3: {
+    title: {
+      ja: "被爆後に立ち上がったところ（荒神橋から見た爆風によってなぎ倒された家々）",
+      en: "When I Stood Up After the Bombing - A Scene Near the Kojin Bridge Where Buildings Were Devastated by the Blast",
+    },
+    author: { ja: "富田真衣", en: "Mai Tomita" },
+  },
+  l4: {
+    title: { ja: "橋のたもとの被爆者が私を見つめている", en: "A-bomb Victims at the Foot of a Bridge Watching Me" },
+    author: { ja: "倉重侑季", en: "Yuki Kurashige" },
+  },
+  l5: {
+    title: { ja: "熱線で火傷し機関車のオイルを塗っている", en: "They Put Steam Locomotive Oil on My Burns Caused by Heat Rays" },
+    author: { ja: "富田真衣", en: "Mai Tomita" },
+  },
 };
 
 type Photo = {
@@ -16,31 +34,50 @@ type Photo = {
   author: string;
 };
 
-const PHOTOS: Photo[] = Array.from({ length: 5 }).map((_, i) => {
-  const n = i + 1;
-  const key = `l${n}` as const;
-  const meta = META[key];
-  return {
-    id: key,
-    url: `/L_${n}_L.png`,
-    title: meta?.title ?? `絵 ${n}`,
-    author: meta?.author ?? "",
-  };
-});
-
 export default function GuestPageA() {
   const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const lang = params.get("lang") === "en" ? "en" : "ja";
+
+  const PHOTOS: Photo[] = Array.from({ length: 5 }).map((_, i) => {
+    const n = i + 1;
+    const key = `l${n}` as const;
+    const meta = META[key];
+    return {
+      id: key,
+      url: `/L_${n}_L.png`,
+      title: meta?.title[lang] ?? `絵 ${n}`,
+      author: meta?.author[lang] ?? "",
+    };
+  });
 
   const handleSelect = (photoId: string) => {
     navigate(`/guest/a2?photo=${photoId}`);
   };
 
+  const TEXT = {
+    ja: {
+      heading: "李鍾根さん",
+      instruction: "絵画を一つ選んでください。",
+      collection: "全ての作品は、広島平和記念資料館所蔵です。",
+      mapButton: "李鍾根さんストーリーマップ",
+      storyTitle: "在日韓国人被爆者 李鍾根　(ｲ・ｼﾞｮﾝｸﾞﾝ)　人生ストーリー",
+      storyDesc: "83歳まで「江川政市」という日本名を名乗ってきた在日韓国人の李鍾根さん。 なぜ、日本名を名乗のり、日本で被爆しなければならなかったのでしょう。そして、どのような人生を送り、どのようなメッセージを後世に伝えたのでしょうか。",
+    },
+    en: {
+      heading: "Lee Jong-keun",
+      instruction: "Please select one artwork.",
+      collection: "All artworks are in the collection of the Hiroshima Peace Memorial Museum.",
+      mapButton: "Story Map of Mr. Lee Jong-geun",
+      storyTitle: "A Life Story of Korean A-bomb Survivor Lee Jong-geun",
+      storyDesc: "Mr. Lee Jong-geun, a Korean A-bomb survivor who lived under the Japanese name 'Egawa Masaichi' until the age of 83. Why did he use a Japanese name and suffer the atomic bombing in Japan? What kind of life did he live, and what message does he leave for future generations?",
+    },
+  };
+
   return (
     <main style={{ padding: 16, maxWidth: 560, margin: "0 auto" }}>
-      <h1 style={{ marginTop: 0 }}>李鍾根さん</h1>
-      <p style={{ color: "#666" }}>
-        絵画を一つ選んでください。
-      </p>
+      <h1 style={{ marginTop: 0 }}>{TEXT[lang].heading}</h1>
+      <p style={{ color: "#666" }}>{TEXT[lang].instruction}</p>
 
       <section style={grid}>
         {PHOTOS.map((p) => (
@@ -51,12 +88,12 @@ export default function GuestPageA() {
             aria-label={`${p.title}を選択`}
           >
             <img src={p.url} alt={p.title} style={thumbImg} />
-            <span style={thumbTitle}>作品名「{p.title}」</span>
+            <span style={thumbTitle}>「{p.title}」</span>
             <span style={thumbAuthor}>{p.author}</span>
           </button>
         ))}
       </section>
-      <p>全ての作品は、広島平和記念資料館所蔵です。</p>
+      <p>{TEXT[lang].collection}</p>
       <div style={{ marginTop: 24, textAlign: "center" }}>
         <a
           href="https://arcg.is/Oy1D00"
@@ -72,7 +109,7 @@ export default function GuestPageA() {
             fontSize: 15,
           }}
         >
-          李鍾根さんストーリーマップ
+          {TEXT[lang].mapButton}
                 {/* Thumbnail + Story lead */}
                 <section
                   style={{
@@ -106,10 +143,10 @@ export default function GuestPageA() {
                         fontWeight: 800,
                       }}
                     >
-                      在日韓国人被爆者 李鍾根　(ｲ・ｼﾞｮﾝｸﾞﾝ)　人生ストーリー
+                      {TEXT[lang].storyTitle}
                     </h2>
                     <p style={{ margin: 0, color: "#333", lineHeight: 1.7, fontSize: 14 }}>
-                      83歳まで「江川政市」という日本名を名乗ってきた在日韓国人の李鍾根さん。 なぜ、日本名を名乗のり、日本で被爆しなければならなかったのでしょう。そして、どのような人生を送り、どのようなメッセージを後世に伝えたのでしょうか。
+                      {TEXT[lang].storyDesc}
                     </p>
                   </div>
                 </section>

@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 
 type Photo = {
@@ -9,24 +9,62 @@ type Photo = {
 };
 
 // 📄 各作品メタ情報（タイトル / 作家）—日本語のみ
-const META: Record<string, { title: string; author: string }> = {
-  k1: { title: "「倒壊校舎からの脱出」", author: "花岡美優" },
-  k2: { title: "「プールサイドの惨劇」", author: "室星理歩" },
-  k3: { title: "「『友達を助けてくれ！』『火が廻って来たぞ、逃げろ！』」", author: "宮本陽菜" },
-  k4: { title: "「人間襤褸（らんる）の群れの中に」", author: "津村果奈" },
-  k5: { title: "「忘れられない　〜あの眼」", author: "富田葵天" },
+const META: Record<string, { title: { ja: string; en: string }; author: { ja: string; en: string } }> = {
+  k1: {
+    title: { ja: "倒壊校舎からの脱出", en: "Escaping from the Debris of a Collapsed School Building" },
+    author: { ja: "花岡美優", en: "Miyu Hanaoka" },
+  },
+  k2: {
+    title: { ja: "プールサイドの惨劇", en: "Poolside Tragedy" },
+    author: { ja: "室星理歩", en: "Riho Muroboshi" },
+  },
+  k3: {
+    title: { ja: "『友達を助けてくれ！』『火が廻って来たぞ、逃げろ！』", en: "'Give Your Hand to Rescue him!' 'Fire is Approaching!' " },
+    author: { ja: "宮本陽菜", en: "Hina Miyamoto" },
+  },
+  k4: {
+    title: { ja: "人間襤褸（らんる）の群れの中に", en: "Amid a Throng of Wounded People Who Looked Like Rags" },
+    author: { ja: "津村果奈", en: "Kana Tsumura" },
+  },
+  k5: {
+    title: { ja: "忘れられない　〜あの眼", en: "Eyes that cannot be forgotten" },
+    author: { ja: "富田葵天", en: "Sora Tomita" },
+  },
 };
-
-const PHOTOS: Photo[] = [
-  { id: "k1", url: "/K_1_L.png", title: META.k1.title, author: META.k1.author },
-  { id: "k2", url: "/K_2_L.png", title: META.k2.title, author: META.k2.author },
-  { id: "k3", url: "/K_3_L.png", title: META.k3.title, author: META.k3.author },
-  { id: "k4", url: "/K_4_L.png", title: META.k4.title, author: META.k4.author },
-  { id: "k5", url: "/K_5_L.png", title: META.k5.title, author: META.k5.author },
-];
 
 export default function GuestPageB() {
   const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const lang = params.get("lang") === "en" ? "en" : "ja";
+
+  const PHOTOS: Photo[] = Object.entries(META).map(([id, data]) => {
+    const n = id.replace(/^k/i, "");
+    return {
+      id,
+      url: `/K_${n}_L.png`,
+      title: data.title[lang],
+      author: data.author[lang],
+    };
+  });
+
+  const TEXT = {
+    ja: {
+      heading: "兒玉光雄さん",
+      instruction: "絵画を一つ選んでください。",
+      collection: "全ての作品は、広島平和記念資料館所蔵です。",
+      mapButton: "兒玉光雄さんストーリーマップ",
+      storyTitle: "至近距離被爆者・兒玉光雄　ー「人間」として生き抜いた「光」の記憶 ー",
+      storyDesc: "中学１年生（12歳）の時、爆心地から約870メートル地点で被爆し、還暦（60歳）を過ぎてから重複癌と闘ってきた兒玉光雄さん。そのライフストーリーから、私たちが学べることは何でしょうか？",
+    },
+    en: {
+      heading: "Kodama Mitsuo",
+      instruction: "Please select one artwork.",
+      collection: "All artworks are in the collection of the Hiroshima Peace Memorial Museum.",
+      mapButton: "Story Map of Mr. Mitsuo Kodama",
+      storyTitle: "A-Bomb Survivor at Close Range – The Memory of 'Light' as a Human Being",
+      storyDesc: "Mr. Mitsuo Kodama was a first-year middle school student (12 years old) when he was exposed to the atomic bomb about 870 meters from the hypocenter. After the age of 60, he battled multiple cancers. What can we learn from his life story?",
+    },
+  };
 
   const handleSelect = (photoId: string) => {
     navigate(`/guest/b2?photo=${photoId}`);
@@ -34,11 +72,11 @@ export default function GuestPageB() {
 
   return (
     <main style={{ padding: 16, maxWidth: 560, margin: "0 auto" }}>
-      <h1 style={{ marginTop: 0 }}>兒玉光雄さん</h1>
+      <h1 style={{ marginTop: 0 }}>{TEXT[lang].heading}</h1>
 
       {/* Instruction */}
       <p style={{ color: "#666", marginTop: 8 }}>
-        絵画を一つ選んでください。
+        {TEXT[lang].instruction}
       </p>
 
       <section style={grid}>
@@ -55,10 +93,10 @@ export default function GuestPageB() {
           </button>
         ))}
       </section>
-      <p>全ての作品は、広島平和記念資料館所蔵です。</p>
+      <p>{TEXT[lang].collection}</p>
       <div style={{ marginTop: 24, textAlign: "center" }}>
         <a
-          href="https://arcg.is/0finmS"
+          href="https://arcg.is/qLLLX2"
           target="_blank"
           rel="noopener noreferrer"
           style={{
@@ -71,7 +109,7 @@ export default function GuestPageB() {
             fontSize: 15,
           }}
         >
-          兒玉光雄さんストーリーマップ
+          {TEXT[lang].mapButton}
                 {/* Thumbnail + Story lead */}
                 <section
                   style={{
@@ -105,10 +143,10 @@ export default function GuestPageB() {
                         fontWeight: 800,
                       }}
                     >
-                      至近距離被爆者・兒玉光雄　ー「人間」として生き抜いた「光」の記憶 ー
+                      {TEXT[lang].storyTitle}
                     </h2>
                     <p style={{ margin: 0, color: "#333", lineHeight: 1.7, fontSize: 14 }}>
-                      中学１年生（12歳）の時、爆心地から約870メートル地点で被爆し、還暦（60歳）を過ぎてから重複癌と闘ってきた兒玉光雄さん。そのライフストーリーから、私たちが学べることは何でしょうか？
+                      {TEXT[lang].storyDesc}
                     </p>
                   </div>
                 </section>
