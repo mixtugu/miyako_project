@@ -43,57 +43,72 @@ async function listCommentsByPhoto(photoId: string) {
   })) as CommentItem[];
 }
 
-// 📷 GuestPageA의 사진 세트와 동일해야 함
+// 📷 GuestPageAの写真セットと同じく k1〜k5 に変更
 const PHOTOS = {
-  p1: "/K_1.jpg",
-  p2: "/K_2.jpg",
-  p3: "/K_3.jpg",
-  p4: "/K_4.jpg",
-  p5: "/K_5.jpg",
+  k1: "/K_1.jpg",
+  k2: "/K_2.jpg",
+  k3: "/K_3.jpg",
+  k4: "/K_4.jpg",
+  k5: "/K_5.jpg",
 } as const;
 
-// 入力パラメータの写真IDを正規化（例: k1 → p1、未知は p1）
+// 入力パラメータの写真IDを正規化（例: k1 → k1、未知は k1）
 function normalizePhotoId(id: string): keyof typeof PHOTOS {
   const m = id.toLowerCase().match(/^k([1-5])$/);
-  if (m) return (`p${m[1]}` as keyof typeof PHOTOS);
+  if (m) return (`k${m[1]}` as keyof typeof PHOTOS);
   const key = id as keyof typeof PHOTOS;
-  return PHOTOS[key] ? key : 'p1';
+  return PHOTOS[key] ? key : 'k1';
 }
 
 // 📄 写真別の説明文（ja/en）—必要に応じて編集してください
 const DESCRIPTIONS: Record<string, { ja: string; en: string }> = {
-  p1: { ja: "作品名「倒壊校舎からの脱出」花岡美優", en: "作品名「倒壊校舎からの脱出」花岡美優" },
-  p2: { ja: "作品名「プールサイドの惨劇」室星理歩", en: "作品名「プールサイドの惨劇」室星理歩" },
-  p3: { ja: "作品名「『友達を助けてくれ！』『火が廻って来たぞ、逃げろ！』」宮本陽菜", en: "作品名「『友達を助けてくれ！』『火が廻って来たぞ、逃げろ！』」宮本陽菜" },
-  p4: { ja: "作品名「人間襤褸（らんる）の群れの中に」津村果奈", en: "作品名「人間襤褸（らんる）の群れの中に」津村果奈" },
-  p5: { ja: "作品名「忘れられない　〜あの眼」富田葵天", en: "作品名「忘れられない　〜あの眼」富田葵天" },
+  k1: { ja: "作品名「倒壊校舎からの脱出」花岡美優", en: "作品名「倒壊校舎からの脱出」花岡美優" },
+  k2: { ja: "作品名「プールサイドの惨劇」室星理歩", en: "作品名「プールサイドの惨劇」室星理歩" },
+  k3: { ja: "作品名「『友達を助けてくれ！』『火が廻って来たぞ、逃げろ！』」宮本陽菜", en: "作品名「『友達を助けてくれ！』『火が廻って来たぞ、逃げろ！』」宮本陽菜" },
+  k4: { ja: "作品名「人間襤褸（らんる）の群れの中に」津村果奈", en: "作品名「人間襤褸（らんる）の群れの中に」津村果奈" },
+  k5: { ja: "作品名「忘れられない　〜あの眼」富田葵天", en: "作品名「忘れられない　〜あの眼」富田葵天" },
 };
 
-export default function GuestPageA2() {
+export default function GuestPageB2() {
   const [params] = useSearchParams();
   const navigate = useNavigate();
-  const rawId = params.get("photo") ?? "p1";
+  const rawId = params.get("photo") ?? "k1";
   const photoId = normalizePhotoId(rawId);
   const photoUrl = PHOTOS[photoId];
 
-  // Locale: choose via ?lang=ja | ?lang=en, fallback to browser
-  const langParam = params.get("lang");
-  const locale = useMemo(() => {
-    if (langParam === "ja") return "ja-JP";
-    if (langParam === "en") return "en-US";
-    return navigator.language?.startsWith("ja") ? "ja-JP" : "en-US";
-  }, [langParam]);
-  
+  // ----- Language resolution: URL ?lang= → localStorage(app_lang) → browser -----
+  const [lang, setLang] = useState<"ja" | "en">("ja");
+
+  useEffect(() => {
+    const q = params.get("lang");
+    if (q === "ja" || q === "en") {
+      setLang(q);
+      try { localStorage.setItem("app_lang", q); } catch {}
+      try { document.documentElement.lang = q; } catch {}
+      return;
+    }
+    try {
+      const saved = localStorage.getItem("app_lang");
+      if (saved === "ja" || saved === "en") {
+        setLang(saved);
+        try { document.documentElement.lang = saved; } catch {}
+        return;
+      }
+    } catch {}
+    const browserIsJa = (navigator.language || navigator.languages?.[0] || "ja").toLowerCase().startsWith("ja");
+    const fallback = browserIsJa ? "ja" : "en";
+    setLang(fallback);
+    try { document.documentElement.lang = fallback; } catch {}
+  }, [params]);
+
+  // locale / formatter derived from lang
+  const locale = useMemo(() => (lang === "ja" ? "ja-JP" : "en-US"), [lang]);
   const dtf = useMemo(
-    () =>
-      new Intl.DateTimeFormat(locale, {
-        dateStyle: "medium",
-        timeStyle: "short",
-      }),
+    () => new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short" }),
     [locale]
   );
 
-  const uiLang = locale.startsWith("ja") ? "ja" : "en";
+  const uiLang = lang;
   const descriptionText = (DESCRIPTIONS[photoId]?.[uiLang] ?? "").trim();
 
   const TEXT = {
@@ -128,7 +143,7 @@ export default function GuestPageA2() {
   const [saving, setSaving] = useState(false);
 
   const title = useMemo(() => {
-    //const order = ["p1", "p2", "p3", "p4", "p5"] as const;
+    //const order = ["k1", "k2", "k3", "k4", "k5"] as const;
     //const idx = order.indexOf(photoId) + 1;
     return descriptionText;
   }, [photoId]);
@@ -176,7 +191,7 @@ export default function GuestPageA2() {
 
       {/* 선택한 사진 표시 */}
       <section style={imgWrap}>
-        <img src={photoUrl} alt="選択した写真" style={img} />
+        <img src={photoUrl} alt={uiLang === "en" ? "Selected photo" : "選択した写真"} style={img} />
       </section>
 
       {/* 写真の説明 */}
@@ -205,17 +220,18 @@ export default function GuestPageA2() {
           onClick={handleSubmit}
           disabled={saving || !text.trim()}
           style={primaryBtn}
+          aria-label={uiLang === "en" ? "Save comment" : "コメントを保存"}
         >
           {saving ? TEXT[uiLang].saving : TEXT[uiLang].save}
         </button>
         <button
           type="button"
           onClick={() => {
-            const outId = /^k[1-5]$/i.test(rawId) ? rawId.toLowerCase() : photoId.replace(/^p/, "k");
-            navigate(`/host/picture?photo=${outId}`);
+            const outId = /^k[1-5]$/i.test(rawId) ? rawId.toLowerCase() : photoId.replace(/^k/, "k");
+            navigate(`/host/picture?photo=${outId}&lang=${lang}`);
           }}
           style={secondaryBtn}
-          aria-label={`ホスト画面で ${photoId} を表示（/host/picture?photo=k#）`}
+          aria-label={uiLang === "en" ? `Show ${photoId} in host screen` : `ホスト画面で ${photoId} を表示`}
         >
           {TEXT[uiLang].goHost}
         </button>

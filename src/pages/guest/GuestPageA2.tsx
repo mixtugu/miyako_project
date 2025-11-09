@@ -81,7 +81,7 @@ const TEXT = {
     save: "Save",
     saving: "Saving...",
     label: "Comment",
-    placeholder: "YourYour thoughts and feelings",
+    placeholder: "Your thoughts and feelings",
     descTop: `Please share your thoughts and feelings about this artwork in the comment box below.
 
       We kindly ask that you write with compassion and respect.
@@ -96,24 +96,39 @@ export default function GuestPageA2() {
   const photoId = params.get("photo") ?? "l1";
   const photoUrl = (PHOTOS as Record<string, string>)[photoId] ?? PHOTOS.l1;
 
-  // Locale: choose via ?lang=ja | ?lang=en, fallback to browser
-  const langParam = params.get("lang");
-  const locale = useMemo(() => {
-    if (langParam === "ja") return "ja-JP";
-    if (langParam === "en") return "en-US";
-    return navigator.language?.startsWith("ja") ? "ja-JP" : "en-US";
-  }, [langParam]);
-  
+  // ----- Language resolution: URL ?lang= → localStorage(app_lang) → browser -----
+  const [lang, setLang] = useState<"ja" | "en">("ja");
+
+  useEffect(() => {
+    const q = params.get("lang");
+    if (q === "ja" || q === "en") {
+      setLang(q);
+      try { localStorage.setItem("app_lang", q); } catch {}
+      try { document.documentElement.lang = q; } catch {}
+      return;
+    }
+    try {
+      const saved = localStorage.getItem("app_lang");
+      if (saved === "ja" || saved === "en") {
+        setLang(saved);
+        try { document.documentElement.lang = saved; } catch {}
+        return;
+      }
+    } catch {}
+    const browserIsJa = (navigator.language || navigator.languages?.[0] || "ja").toLowerCase().startsWith("ja");
+    const fallback = browserIsJa ? "ja" : "en";
+    setLang(fallback);
+    try { document.documentElement.lang = fallback; } catch {}
+  }, [params]);
+
+  // locale / formatter derived from lang
+  const locale = useMemo(() => (lang === "ja" ? "ja-JP" : "en-US"), [lang]);
   const dtf = useMemo(
-    () =>
-      new Intl.DateTimeFormat(locale, {
-        dateStyle: "medium",
-        timeStyle: "short",
-      }),
+    () => new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short" }),
     [locale]
   );
 
-  const uiLang = locale.startsWith("ja") ? "ja" : "en";
+  const uiLang = lang;
   const descriptionText = (DESCRIPTIONS[photoId]?.[uiLang] ?? "").trim();
 
   const [text, setText] = useState("");
@@ -169,7 +184,7 @@ export default function GuestPageA2() {
 
       {/* 선택한 사진 표시 */}
       <section style={imgWrap}>
-        <img src={photoUrl} alt="選択した写真" style={img} />
+        <img src={photoUrl} alt={uiLang === "en" ? "Selected photo" : "選択した写真"} style={img} />
       </section>
 
       {/* 사진 설명 */}
@@ -198,14 +213,15 @@ export default function GuestPageA2() {
           onClick={handleSubmit}
           disabled={saving || !text.trim()}
           style={primaryBtn}
+          aria-label={uiLang === "en" ? "Save comment" : "コメントを保存"}
         >
           {saving ? TEXT[uiLang].saving : TEXT[uiLang].save}
         </button>
         <button
           type="button"
-          onClick={() => navigate(`/host/picture?photo=${photoId}`)}
+          onClick={() => navigate(`/host/picture?photo=${photoId}&lang=${lang}`)}
           style={secondaryBtn}
-          aria-label={`ホスト画面で ${photoId} を表示`}
+          aria-label={uiLang === "en" ? `Show ${photoId} in host screen` : `ホスト画面で ${photoId} を表示`}
         >
           {TEXT[uiLang].hostButton}
         </button>

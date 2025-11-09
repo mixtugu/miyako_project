@@ -1,5 +1,5 @@
 import { useNavigate, useSearchParams } from "react-router-dom";
-
+import { useEffect, useMemo, useState } from "react";
 
 type Photo = {
   id: string;
@@ -35,7 +35,31 @@ const META: Record<string, { title: { ja: string; en: string }; author: { ja: st
 export default function GuestPageB() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
-  const lang = params.get("lang") === "en" ? "en" : "ja";
+
+  // ----- Language resolution: URL ?lang= → localStorage('app_lang') → browser -----
+  const [lang, setLang] = useState<"ja" | "en">("ja");
+
+  useEffect(() => {
+    const q = params.get("lang");
+    if (q === "ja" || q === "en") {
+      setLang(q);
+      try { localStorage.setItem("app_lang", q); } catch {}
+      try { document.documentElement.lang = q; } catch {}
+      return;
+    }
+    try {
+      const saved = localStorage.getItem("app_lang");
+      if (saved === "ja" || saved === "en") {
+        setLang(saved);
+        try { document.documentElement.lang = saved; } catch {}
+        return;
+      }
+    } catch {}
+    const browserIsJa = (navigator.language || navigator.languages?.[0] || "ja").toLowerCase().startsWith("ja");
+    const fallback = browserIsJa ? "ja" : "en";
+    setLang(fallback);
+    try { document.documentElement.lang = fallback; } catch {}
+  }, [params]);
 
   const PHOTOS: Photo[] = Object.entries(META).map(([id, data]) => {
     const n = id.replace(/^k/i, "");
@@ -67,7 +91,7 @@ export default function GuestPageB() {
   };
 
   const handleSelect = (photoId: string) => {
-    navigate(`/guest/b2?photo=${photoId}`);
+    navigate(`/guest/b2?photo=${photoId}&lang=${lang}`);
   };
 
   return (
@@ -85,7 +109,7 @@ export default function GuestPageB() {
             key={p.id}
             style={thumbBtn}
             onClick={() => handleSelect(p.id)}
-            aria-label={`${p.title}（${p.author}）を選択`}
+            aria-label={lang === "en" ? `Select ${p.title} by ${p.author}` : `${p.title}（${p.author}）を選択`}
           >
             <img src={p.url} alt={p.title} style={thumbImg} />
             <span style={thumbTitle}>{p.title}</span>
@@ -122,7 +146,7 @@ export default function GuestPageB() {
                 >
                   <img
                     src={"/K.png"}
-                    alt="サムネイル"
+                    alt={lang === "en" ? "Thumbnail" : "サムネイル"}
                     style={{
                       width: 160,
                       aspectRatio: "4 / 3",
