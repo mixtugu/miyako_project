@@ -4,10 +4,11 @@ import { useEffect, useMemo, useState } from "react";
 export default function Nav() {
   // ----- styles -----
   const link: React.CSSProperties = {
-    padding: "8px 12px",
+    padding: 'clamp(4px, 1.5vw, 6px) clamp(8px, 2vw, 12px)', // responsive padding
     borderRadius: 8,
     textDecoration: "none",
     border: "1px solid #e5e5e5",
+    fontSize: 'clamp(5px, 2vw, 18px)', // responsive link text
   };
   const wrap: React.CSSProperties = {
     display: "flex",
@@ -20,9 +21,10 @@ export default function Nav() {
     zIndex: 10,
     alignItems: "center",
     justifyContent: "space-between",
+    flexWrap: 'wrap', // allow wrapping on smaller screens
   };
   const leftGroup: React.CSSProperties = { display: "flex", gap: 8, alignItems: "center" };
-  const rightGroup: React.CSSProperties = { display: "flex", gap: 8, alignItems: "center" };
+  const rightGroup: React.CSSProperties = { display: "flex", gap: 8, alignItems: "center", marginTop: 'clamp(4px, 1vw, 8px)' };
 
   const pillBase: React.CSSProperties = {
     padding: "6px 10px",
@@ -30,7 +32,7 @@ export default function Nav() {
     border: "1px solid #e5e5e5",
     cursor: "pointer",
     background: "#fff",
-    fontSize: 13,
+    fontSize: 'clamp(10px, 2.5vw, 13px)', // responsive font size for mobile
   };
   const pillActive: React.CSSProperties = {
     ...pillBase,
