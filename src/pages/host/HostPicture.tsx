@@ -1,48 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { RealtimePostgresInsertPayload } from "@supabase/supabase-js";
+import type { RealtimePostgresDeletePayload, RealtimePostgresInsertPayload } from "@supabase/supabase-js";
 import { useSearchParams, Link } from "react-router-dom";
 
+import { getArtworkOrFallback, formatArtworkDescription } from "../../lib/gallery";
+import { resolveAppLang } from "../../lib/lang";
 import { supabase } from "../../lib/supabaseClient";
-
-function urlFromId(id: string): string {
-  if (id.startsWith("l")) {
-    const n = Number(id.slice(1)) || 1;
-    return `/L_${n}.jpg`;
-    }
-  if (id.startsWith("k")) {
-    const n = Number(id.slice(1)) || 1;
-    return `/K_${n}.jpg`;
-  }
-  return "/L_1.jpg";
-}
-
-function labelFromId(id: string): string {
-  if (id.startsWith("l")) {
-    const n = Number(id.slice(1)) || 1;
-    return `絵 ${n}`;
-  }
-  if (id.startsWith("k")) {
-    const n = Number(id.slice(1)) || 1;
-    return `絵 ${n + 5}`;
-  }
-  return "絵";
-}
-
-// 📄 写真別の説明文（ja/en）—必要に応じて編集してください
-const DESCRIPTIONS: Record<string, { ja: string; en: string }> = {
-  // L 系列
-  l1: { ja: "作品名「閃光」曽根沙也佳", en: "作品名「閃光」曽根沙也佳" },
-  l2: { ja: "作品名「閃光ののち伏せた場面」倉重侑季", en: "作品名「閃光ののち伏せた場面」倉重侑季" },
-  l3: { ja: "作品名「被爆後に立ち上がったところ（荒神橋から見た爆風によってなぎ倒された家々）」富田真衣", en: "作品名「被爆後に立ち上がったところ（荒神橋から見た爆風によってなぎ倒された家々）」富田真衣" },
-  l4: { ja: "作品名「橋のたもとの被爆者が私を見つめている」倉重侑季", en: "作品名「橋のたもとの被爆者が私を見つめている」倉重侑季" },
-  l5: { ja: "作品名「熱線で火傷し機関車のオイルを塗っている」富田真衣", en: "作品名「熱線で火傷し機関車のオイルを塗っている」富田真衣" },
-  // K 系列
-  k1: { ja: "作品名「倒壊校舎からの脱出」花岡美優", en: "作品名「倒壊校舎からの脱出」花岡美優" },
-  k2: { ja: "作品名「プールサイドの惨劇」室星理歩", en: "作品名「プールサイドの惨劇」室星理歩" },
-  k3: { ja: "作品名「『友達を助けてくれ！』『火が廻って来たぞ、逃げろ！』」宮本陽菜", en: "作品名「『友達を助けてくれ！』『火が廻って来たぞ、逃げろ！』」宮本陽菜" },
-  k4: { ja: "作品名「人間襤褸（らんる）の群れの中に」津村果奈", en: "作品名「人間襤褸（らんる）の群れの中に」津村果奈" },
-  k5: { ja: "作品名「忘れられない　〜あの眼」富田葵天", en: "作品名「忘れられない　〜あの眼」富田葵天" },
-};
 
 type DBCommentRow = {
   id: string;
@@ -112,7 +74,7 @@ async function listCommentsByPhoto(photoId: string) {
     .from("comments")
     .select("id, photo_id, text, created_at")
     .eq("photo_id", photoId)
-    .order("created_at", { ascending: false }) as { data: DBCommentRow[] | null; error: any };
+    .order("created_at", { ascending: false }) as { data: DBCommentRow[] | null; error: unknown };
 
   if (error) throw error;
   return (data ?? []);
@@ -120,10 +82,10 @@ async function listCommentsByPhoto(photoId: string) {
 
 export default function HostPicture() {
   const [params] = useSearchParams();
-  const photoId = params.get("photo") ?? "l1";
-
-  const src = useMemo(() => urlFromId(photoId), [photoId]);
-  const label = useMemo(() => labelFromId(photoId), [photoId]);
+  const artwork = getArtworkOrFallback(params.get("photo") ?? "l1");
+  const photoId = artwork.id;
+  const src = artwork.imageUrl;
+  const label = artwork.title.ja;
   const [items, setItems] = useState<DBCommentRow[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
@@ -176,26 +138,9 @@ const pillBase: React.CSSProperties = {
   transform: "translateX(40%)",
 };
 
-  // Locale: choose via ?lang=ja | ?lang=en, fallback to browser
-  const langParam = params.get("lang");
-  const locale = useMemo(() => {
-    if (langParam === "ja") return "ja-JP";
-    if (langParam === "en") return "en-US";
-    return navigator.language?.startsWith("ja") ? "ja-JP" : "en-US";
-  }, [langParam]);
-
-  // const dtf = useMemo(
-  //   () =>
-  //     new Intl.DateTimeFormat(locale, {
-  //       dateStyle: "medium",
-  //       timeStyle: "short",
-  //     }),
-  //   [locale]
-  // );
-
-  // 説明文の言語選択と取得
-  const uiLang = locale.startsWith("ja") ? "ja" : "en";
-  const descriptionText = (DESCRIPTIONS[photoId]?.[uiLang] ?? "").trim();
+  const paramString = params.toString();
+  const uiLang = useMemo(() => resolveAppLang(`?${paramString}`), [paramString]);
+  const descriptionText = formatArtworkDescription(artwork, uiLang);
 
   useEffect(() => {
     if (!items || items.length === 0) return;
@@ -311,6 +256,27 @@ const pillBase: React.CSSProperties = {
           setItems((prev: DBCommentRow[]) => [r, ...prev]);
         }
       )
+      .on(
+        "postgres_changes",
+        { event: "DELETE", schema: "public", table: "comments", filter: `photo_id=eq.${photoId}` },
+        (payload: RealtimePostgresDeletePayload<DBCommentRow>) => {
+          const deletedId = payload.old.id;
+          if (!deletedId) {
+            return;
+          }
+          setItems((prev) => prev.filter((item) => item.id !== deletedId));
+          setPositions((prev) => {
+            const next = { ...prev };
+            delete next[deletedId];
+            return next;
+          });
+          setZOrder((prev) => {
+            const next = { ...prev };
+            delete next[deletedId];
+            return next;
+          });
+        }
+      )
       .subscribe();
 
     return () => {
@@ -322,7 +288,7 @@ const pillBase: React.CSSProperties = {
     <main style={{ padding: 24, maxWidth: 1200, margin: "0 auto" }}>
       <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
         <h2 style={{ margin: 0 }}>みんなのコメント — {descriptionText}</h2>
-        <Link to="/host" style={{ textDecoration: "none", fontSize: 14 }}>← 一覧に戻る</Link>
+        <Link to={`/host?lang=${uiLang}`} style={{ textDecoration: "none", fontSize: 14 }}>← 一覧に戻る</Link>
       </header>
 
       <section style={imgWrap}>
@@ -387,8 +353,7 @@ const pillBase: React.CSSProperties = {
       {descriptionText && (
         <section style={descWrap}>
           <p style={descText}>
-            広島平和記念資料館所蔵　
-            {' 　'}
+            広島平和記念資料館所蔵 {" / "}
             {descriptionText}
           </p>
         </section>

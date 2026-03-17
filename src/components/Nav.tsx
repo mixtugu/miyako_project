@@ -1,5 +1,8 @@
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
+
+import { guestGalleryById } from "../lib/gallery";
+import { buildSearchWithLang } from "../lib/lang";
+import { useAppLang } from "../hooks/useAppLang";
 
 export default function Nav() {
   // ----- styles -----
@@ -42,41 +45,26 @@ export default function Nav() {
   };
 
   // ----- lang state -----
-  const location = useLocation();
-  const navigate = useNavigate();
-  const [lang, setLang] = useState<"ja" | "en">("ja");
-
-  // Determine initial language: URL ?lang=, else localStorage, else browser
-  const urlLang = useMemo(() => {
-    const sp = new URLSearchParams(location.search);
-    const v = sp.get("lang");
-    return v === "ja" || v === "en" ? v : null;
-  }, [location.search]);
-
-  useEffect(() => {
-    const stored = (localStorage.getItem("lang") as "ja" | "en" | null);
-    const browser: "ja" | "en" = navigator.language?.toLowerCase().startsWith("ja") ? "ja" : "en";
-    setLang(urlLang ?? stored ?? browser);
-  }, [urlLang]);
-
-  // Keep URL and localStorage in sync when lang changes
-  useEffect(() => {
-    localStorage.setItem("lang", lang);
-    const sp = new URLSearchParams(location.search);
-    if (sp.get("lang") !== lang) {
-      sp.set("lang", lang);
-      navigate({ pathname: location.pathname, search: `?${sp.toString()}` }, { replace: true });
-    }
-  }, [lang]);
-
-  const withLang = (path: string) => ({ pathname: path, search: `?lang=${lang}` });
+  const { lang, setLang } = useAppLang({ syncUrl: true });
 
   return (
     <nav style={wrap}>
       <div style={leftGroup}>
-        <Link to={withLang("/guest/a")} style={link}>李鍾根さん</Link>
-        <Link to={withLang("/guest/b")} style={link}>兒玉光雄さん</Link>
-        <Link to={withLang("/host")} style={link}>Gallery</Link>
+        <Link
+          to={{ pathname: guestGalleryById.a.guestListPath, search: buildSearchWithLang(lang) }}
+          style={link}
+        >
+          {guestGalleryById.a.heading.ja}
+        </Link>
+        <Link
+          to={{ pathname: guestGalleryById.b.guestListPath, search: buildSearchWithLang(lang) }}
+          style={link}
+        >
+          {guestGalleryById.b.heading.ja}
+        </Link>
+        <Link to={{ pathname: "/host", search: buildSearchWithLang(lang) }} style={link}>
+          Gallery
+        </Link>
         <a href="https://careful-wrinkle-de0.notion.site/HOME-2956e1cc4225801085a1e4d485e1e07b?pvs=143" style={link}>HOME</a>
       </div>
 
