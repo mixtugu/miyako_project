@@ -11,7 +11,7 @@ React + TypeScript + Vite gallery running entirely on Cloudflare: Workers serves
 - `src/pages/` and `src/components/`: guest galleries, comments, and host display.
 - `src/lib/live-gallery.ts`: paginated snapshots, live notifications, reconnection, and recovery polling.
 - `shared/`: request validation and shared response types.
-- `worker/index.ts`: same-origin API, validation, rate limits, and server-side deletion authentication.
+- `worker/index.ts`: same-origin API, validation, and server-side deletion authentication.
 - `worker/room.ts`: read-only WebSocket rooms, one per artwork, with hibernation support.
 - `migrations/`: D1 schema; comment deletion cascades to its saved position atomically.
 - `scripts/`: deployment, optional legacy export, and exact import verification.
@@ -51,7 +51,7 @@ npm run data:verify -- migration-data/SNAPSHOT --local
 
 D1 is accessible only through the server binding; there is no public database key or direct browser write path. Public visitors can continue to post and reposition comments. Deletion requires the private password. The Worker uses bound SQL parameters, validates IDs, limits comments to 2,000 characters and JSON bodies to 12 KiB, checks position ownership against its artwork, and rejects cross-origin browser requests. A foreign key cascade makes deletion atomic. API errors do not expose internal SQL or secrets.
 
-Per-IP limits per minute: 20 comment posts, 120 position updates, 5 deletion attempts, 1,200 reads, and 60 WebSocket handshakes. Each artwork room allows up to 500 sockets. Cloudflare rate limits are approximate and location-local; visitors sharing a venue IP also share a limit. Tune these values for the installation. Inline styles remain enabled for the existing React UI; inline scripts and third-party API connections are blocked by CSP.
+There are no per-IP request limits, so visitors sharing a venue IP are never blocked. Each artwork room allows up to 500 sockets. Inline styles remain enabled for the existing React UI; inline scripts and third-party API connections are blocked by CSP.
 
 The server sends notifications only after a database write. Reconnection and a 30-second foreground refresh recover missed notifications. A notification failure does not turn a successfully committed write into an error that could cause a duplicate retry. WebSocket clients cannot publish events or mutate the database.
 
@@ -115,4 +115,3 @@ Roll back only to releases compatible with the D1 schema and protected API. Do n
 - [Workers Static Assets](https://developers.cloudflare.com/workers/static-assets/)
 - [D1 import and export](https://developers.cloudflare.com/d1/best-practices/import-export-data/)
 - [Durable Objects WebSockets](https://developers.cloudflare.com/durable-objects/best-practices/websockets/)
-- [Worker rate limiting](https://developers.cloudflare.com/workers/runtime-apis/bindings/rate-limit/)

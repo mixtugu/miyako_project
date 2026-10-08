@@ -93,10 +93,6 @@ const commentUi = {
     ja: "パスワードが一致しません。",
     en: "The password does not match.",
   },
-  rateLimited: {
-    ja: "操作が多すぎます。1分ほど待ってから、もう一度お試しください。",
-    en: "Too many requests. Please wait about a minute and try again.",
-  },
   saveError: {
     ja: "コメントの保存中にエラーが発生しました。",
     en: "An error occurred while saving your comment.",

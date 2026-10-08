@@ -16,9 +16,16 @@ const canonical = data => ({
   comments: data.comments.map(({ id, photo_id, text, created_at }) => ({ id, photo_id, text, created_at })),
   comment_positions: data.comment_positions.map(({ comment_id, photo_id, top_pct, left_pct, updated_at }) => ({ comment_id, photo_id, top_pct, left_pct, updated_at })),
 });
+// Postgres (source) and SQLite (D1) may collate IDs differently, so compare in one shared order.
+const byKey = key => (a, b) => (a[key] < b[key] ? -1 : a[key] > b[key] ? 1 : 0);
+const ordered = data => ({
+  comments: [...data.comments].sort(byKey('id')),
+  comment_positions: [...data.comment_positions].sort(byKey('comment_id')),
+});
+const expected = canonical(source);
 const imported = canonical({ comments, comment_positions: positions });
-if (foreignKeys.length || JSON.stringify(canonical(source)) !== JSON.stringify(imported)) throw new Error('Source and D1 differ. No data was modified by this verification.');
-const sha256 = createHash('sha256').update(JSON.stringify(imported)).digest('hex');
+if (foreignKeys.length || JSON.stringify(ordered(expected)) !== JSON.stringify(ordered(imported))) throw new Error('Source and D1 differ. No data was modified by this verification.');
+const sha256 = createHash('sha256').update(JSON.stringify(expected)).digest('hex');
 if (sha256 !== manifest.sha256) throw new Error('Import checksum mismatch.');
 const report = { verified_at: new Date().toISOString(), target: process.argv.includes('--local') ? 'local' : 'remote', comments: comments.length, positions: positions.length, sha256, foreign_key_errors: 0, exact_match: true };
 await writeFile(`${directory}/verification-${report.target}.json`, JSON.stringify(report, null, 2) + '\n', { mode: 0o600 });

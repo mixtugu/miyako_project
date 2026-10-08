@@ -4,7 +4,6 @@ import worker from '../worker/index.ts';
 import { createD1 } from './fixtures/d1.mjs';
 
 const password = 'new-private-test-password-12345';
-const allow = { limit: async () => ({ success: true }) };
 const request = (path, method = 'POST', body, headers = {}) => new Request(`https://gallery.example${path}`, {
   method, headers: { 'Content-Type': 'application/json', Origin: 'https://gallery.example', ...headers },
   body: body === undefined ? undefined : JSON.stringify(body),
@@ -15,8 +14,6 @@ function setup(t) {
   const messages = [], tasks = [];
   const env = {
     ASSETS: { fetch: async () => new Response('SPA') }, DB: db, COMMENT_DELETE_PASSWORD: password,
-    COMMENT_RATE_LIMITER: allow, POSITION_RATE_LIMITER: allow, DELETE_RATE_LIMITER: allow,
-    READ_RATE_LIMITER: allow, SOCKET_RATE_LIMITER: allow,
     GALLERY_ROOMS: { idFromName: name => name, get: id => ({ fetch: async () => { messages.push(id); return new Response(null, { status: 204 }); } }) },
   };
   const ctx = { waitUntil: promise => tasks.push(promise) };
@@ -68,19 +65,6 @@ test('pagination returns all rows exactly once and isolates artwork', async t =>
   assert.equal(new Set([...first.comments, ...second.comments].map(row => row.id)).size, 205);
 });
 
-test('rate limits protect mutations, reads, and WebSocket connections', async t => {
-  const { call } = setup(t);
-  const denied = { limit: async () => ({ success: false }) };
-  for (const [path, method, binding] of [
-    ['/api/comments/id','DELETE','DELETE'], ['/api/comments','POST','COMMENT'], ['/api/positions','PUT','POSITION'],
-    ['/api/gallery?photoId=l1','GET','READ'], ['/api/events?photoId=l1','GET','SOCKET'],
-  ]) {
-    const response = await call(request(path, method), { [`${binding}_RATE_LIMITER`]: denied });
-    assert.equal(response.status, 429);
-    assert.equal(response.headers.get('Retry-After'), '60');
-  }
-});
-
 test('invalid, oversized, non-JSON, and cross-origin inputs are rejected', async t => {
   const { call, sqlite } = setup(t);
   assert.equal((await call(request('/api/comments','POST',{}, { Origin: 'https://attacker.example' }))).status, 403);
@@ -100,7 +84,6 @@ test('missing security configuration and database errors fail closed without lea
   const deletion = () => request('/api/comments/id','DELETE',undefined,{'X-Admin-Password':password});
   assert.equal((await call(deletion(),{COMMENT_DELETE_PASSWORD:''})).status,503);
   assert.equal((await call(deletion(),{COMMENT_DELETE_PASSWORD:'short'})).status,503);
-  assert.equal((await call(deletion(),{DELETE_RATE_LIMITER:undefined})).status,503);
   const response = await call(request('/api/gallery?photoId=l1','GET'),{DB:{prepare(){throw new Error('private database detail');}}});
   assert.equal(response.status,503);
   assert.deepEqual(await response.json(),{error:'service_unavailable'});

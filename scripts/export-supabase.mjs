@@ -1,7 +1,7 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { resolve } from 'node:path';
-import { isCommentId } from '../shared/validation.ts';
+import { isCommentId, isPhotoId } from '../shared/validation.ts';
 
 // This one-time, read-only exporter is the only code that contacts Supabase.
 const source = process.env.SUPABASE_EXPORT_URL ?? process.env.VITE_SUPABASE_URL;
@@ -40,7 +40,7 @@ const second = await snapshot();
 if (JSON.stringify(data) !== JSON.stringify(second)) throw new Error('Source changed between verification reads. No export written; retry.');
 const comments = new Map(data.comments.map(row => [row.id, row]));
 for (const row of data.comments) {
-  if (!isCommentId(row.id) || !isCommentId(row.photo_id) || typeof row.text !== 'string' || row.text.includes('\0') || !Number.isFinite(Date.parse(row.created_at))) {
+  if (!isCommentId(row.id) || !isPhotoId(row.photo_id) || typeof row.text !== 'string' || row.text.includes('\0') || !Number.isFinite(Date.parse(row.created_at))) {
     throw new Error('Unsupported source comment. Inspect privately before migrating.');
   }
 }

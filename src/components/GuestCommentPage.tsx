@@ -56,8 +56,7 @@ export default function GuestCommentPage({ photoId, lang }: GuestCommentPageProp
       setItems(await listCommentsByPhoto(artwork.id));
     } catch (error) {
       console.error(error);
-      alert(error instanceof ApiError && error.status === 429
-        ? galleryCopy.commentUi.rateLimited[lang] : galleryCopy.commentUi.saveError[lang]);
+      alert(galleryCopy.commentUi.saveError[lang]);
     } finally {
       setSaving(false);
     }
@@ -81,8 +80,7 @@ export default function GuestCommentPage({ photoId, lang }: GuestCommentPageProp
       console.error(error);
       alert(error instanceof ApiError && error.status === 401
         ? galleryCopy.commentUi.passwordMismatch[lang]
-        : error instanceof ApiError && error.status === 429
-          ? galleryCopy.commentUi.rateLimited[lang] : galleryCopy.commentUi.deleteError[lang]);
+        : galleryCopy.commentUi.deleteError[lang]);
     } finally {
       setDeletingId(null);
     }

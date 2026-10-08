@@ -12,7 +12,6 @@ config.main = resolve('worker/index.ts');
 config.assets.directory = resolve('dist');
 config.vars = { COMMENT_DELETE_PASSWORD: 'fixture-only-long-password' };
 config.d1_databases = [{ binding: 'DB', database_name: 'miyako-test', database_id: '11111111-1111-4111-8111-111111111111', migrations_dir: resolve('migrations') }];
-config.ratelimits = config.ratelimits.map(binding => ({ ...binding, simple: { limit: 1000, period: 60 } }));
 const configPath = join(directory, 'wrangler.json');
 const persistence = join(directory, 'state');
 await writeFile(configPath, JSON.stringify(config));

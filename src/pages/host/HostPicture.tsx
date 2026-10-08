@@ -21,11 +21,11 @@ function hashToUnit(s: string): number {
 }
 
 function positionFor(id: string): { top: string; left: string } {
-  // spread comments within safe margins (5%~85%) to avoid edges
+  // spread comments within the same 4%~96% range the API accepts
   const h1 = hashToUnit(id);
   const h2 = hashToUnit(id + "x");
-  const topPct = 4 + h1 * 94;   // 4% ~ 96%
-  const leftPct = 4 + h2 * 94;  // 4% ~ 96%
+  const topPct = 4 + h1 * 92;   // 4% ~ 96%
+  const leftPct = 4 + h2 * 92;  // 4% ~ 96%
   return { top: `${topPct.toFixed(2)}%`, left: `${leftPct.toFixed(2)}%` };
 }
 
@@ -95,20 +95,8 @@ const pillBase: React.CSSProperties = {
   const descriptionText = formatArtworkDescription(artwork, uiLang);
 
   useEffect(() => {
+    // Positions are assigned in the watchGallery snapshot handler; only z-order is seeded here.
     if (!items || items.length === 0) return;
-    setPositions((prev) => {
-      const next = { ...prev };
-      items.forEach((c) => {
-        if (!next[c.id]) {
-          const pos = positionFor(c.id);
-          next[c.id] = {
-            top: parseFloat(pos.top),
-            left: parseFloat(pos.left),
-          };
-        }
-      });
-      return next;
-    });
     setZOrder((prev) => {
       const next = { ...prev };
       items.forEach((c) => {
@@ -155,14 +143,13 @@ const pillBase: React.CSSProperties = {
 
   const updatePosFromPointer = (id: string, clientX: number, clientY: number) => {
     const el = containerRef.current;
-    if (!el) return;
+    if (!el) return undefined;
     const rect = el.getBoundingClientRect();
     const topPct = ((clientY - rect.top) / rect.height) * 100;
     const leftPct = ((clientX - rect.left) / rect.width) * 100;
-    setPositions((prev) => ({
-      ...prev,
-      [id]: { top: clamp(topPct, 4, 96), left: clamp(leftPct, 4, 96) },
-    }));
+    const pos = { top: clamp(topPct, 4, 96), left: clamp(leftPct, 4, 96) };
+    setPositions((prev) => ({ ...prev, [id]: pos }));
+    return pos;
   };
   useEffect(() => {
     setLoading(true);
@@ -173,10 +160,11 @@ const pillBase: React.CSSProperties = {
     setPositionError(false);
     return watchGallery(photoId, ({ comments, positions: saved }) => {
       setItems(comments);
+      const savedById = new Map(saved.map(row => [row.comment_id, row]));
       setPositions(prev => {
         const next: Record<string, { top: number; left: number }> = {};
         for (const comment of comments) {
-          const stored = saved.find(row => row.comment_id === comment.id);
+          const stored = savedById.get(comment.id);
           const fallback = positionFor(comment.id);
           next[comment.id] = comment.id === dragIdRef.current && prev[comment.id]
             ? prev[comment.id]
@@ -240,7 +228,8 @@ const pillBase: React.CSSProperties = {
                     dragIdRef.current = null;
                     setDragId(null);
                     (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
-                    const p = positions[c.id];
+                    // Use the release coordinates: `positions` from this render can lag the last pointermove.
+                    const p = updatePosFromPointer(c.id, e.clientX, e.clientY) ?? positions[c.id];
                     if (p) {
                       setPositionError(false);
                       void upsertPosition({

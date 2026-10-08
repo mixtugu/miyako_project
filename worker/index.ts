@@ -2,17 +2,11 @@ import { isCommentId, isCoordinate, isPhotoId, MAX_BODY_BYTES, MAX_COMMENT_LENGT
 import type { CommentRow, PositionRow, GalleryPage } from "../shared/gallery-types.ts";
 export { GalleryRoom } from "./room.ts";
 
-type Limiter = { limit(options: { key: string }): Promise<{ success: boolean }> };
 export type Env = {
   ASSETS: { fetch(request: Request): Promise<Response> };
   DB: D1Database;
   GALLERY_ROOMS: DurableObjectNamespace;
   COMMENT_DELETE_PASSWORD?: string;
-  COMMENT_RATE_LIMITER: Limiter;
-  POSITION_RATE_LIMITER: Limiter;
-  DELETE_RATE_LIMITER: Limiter;
-  READ_RATE_LIMITER: Limiter;
-  SOCKET_RATE_LIMITER: Limiter;
 };
 
 class HttpError extends Error {
@@ -32,7 +26,6 @@ function secureResponse(response: Response): Response {
   result.headers.set("X-Frame-Options", "DENY");
   result.headers.set("Referrer-Policy", "no-referrer");
   result.headers.set("Content-Security-Policy", "default-src 'none'; frame-ancestors 'none'");
-  if (response.status === 429) result.headers.set("Retry-After", "60");
   return result;
 }
 
@@ -67,15 +60,7 @@ async function readBody(request: Request): Promise<Record<string, unknown>> {
   } catch { throw new HttpError(400, "invalid_json"); }
 }
 
-async function limit(request: Request, limiter: Limiter | undefined): Promise<void> {
-  // Missing bindings must never silently disable protection.
-  if (!limiter) throw new HttpError(503, "service_unavailable");
-  const { success } = await limiter.limit({ key: request.headers.get("CF-Connecting-IP") ?? "unknown" });
-  if (!success) throw new HttpError(429, "rate_limited");
-}
-
 async function verifyPassword(request: Request, env: Env): Promise<void> {
-  await limit(request, env.DELETE_RATE_LIMITER);
   const expected = env.COMMENT_DELETE_PASSWORD;
   if (!expected || expected.length < 16) throw new HttpError(503, "service_unavailable");
   const supplied = request.headers.get("X-Admin-Password");
@@ -106,11 +91,9 @@ async function api(request: Request, env: Env, pathname: string, ctx: Pick<Execu
     const photoId = params.get("photoId");
     if (!isPhotoId(photoId)) throw new HttpError(400, "invalid_photo_id");
     if (pathname === "/api/events") {
-      await limit(request, env.SOCKET_RATE_LIMITER);
       if (request.headers.get("Upgrade")?.toLowerCase() !== "websocket") throw new HttpError(426, "websocket_required");
       return env.GALLERY_ROOMS.get(env.GALLERY_ROOMS.idFromName(photoId)).fetch(new Request("https://room/connect", request));
     }
-    await limit(request, env.READ_RATE_LIMITER);
     const cursor = params.get("after") ?? "";
     if (cursor && !isCommentId(cursor)) throw new HttpError(400, "invalid_cursor");
     type Joined = CommentRow & { top_pct: number | null; left_pct: number | null; updated_at: string | null };
@@ -130,7 +113,6 @@ async function api(request: Request, env: Env, pathname: string, ctx: Pick<Execu
     return json(page);
   }
   if (pathname === "/api/comments" && request.method === "POST") {
-    await limit(request, env.COMMENT_RATE_LIMITER);
     const body = await readBody(request);
     if (!isPhotoId(body.photoId) || typeof body.text !== "string") throw new HttpError(400, "invalid_comment");
     const text = body.text.trim();
@@ -154,7 +136,6 @@ async function api(request: Request, env: Env, pathname: string, ctx: Pick<Execu
     return new Response(null, { status: 204 });
   }
   if (pathname === "/api/positions" && request.method === "PUT") {
-    await limit(request, env.POSITION_RATE_LIMITER);
     const body = await readBody(request);
     if (!isCommentId(body.comment_id) || !isPhotoId(body.photo_id) || !isCoordinate(body.top_pct) || !isCoordinate(body.left_pct)) {
       throw new HttpError(400, "invalid_position");
