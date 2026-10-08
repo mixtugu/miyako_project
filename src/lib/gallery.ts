@@ -93,9 +93,9 @@ const commentUi = {
     ja: "パスワードが一致しません。",
     en: "The password does not match.",
   },
-  passwordNotConfigured: {
-    ja: "削除用パスワードが設定されていません。",
-    en: "The delete password is not configured.",
+  rateLimited: {
+    ja: "操作が多すぎます。1分ほど待ってから、もう一度お試しください。",
+    en: "Too many requests. Please wait about a minute and try again.",
   },
   saveError: {
     ja: "コメントの保存中にエラーが発生しました。",

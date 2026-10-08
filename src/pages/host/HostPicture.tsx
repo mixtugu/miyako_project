@@ -1,54 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { RealtimePostgresDeletePayload, RealtimePostgresInsertPayload } from "@supabase/supabase-js";
 import { useSearchParams, Link } from "react-router-dom";
 
 import { getArtworkOrFallback, formatArtworkDescription } from "../../lib/gallery";
 import { resolveAppLang } from "../../lib/lang";
-import { supabase } from "../../lib/supabaseClient";
-
-type DBCommentRow = {
-  id: string;
-  photo_id: string;
-  text: string;
-  created_at: string;
-};
-
-type DBPosRow = {
-  comment_id: string;
-  photo_id: string;
-  top_pct: number;
-  left_pct: number;
-  updated_at?: string;
-};
-
-async function listPositionsByPhoto(photoId: string): Promise<DBPosRow[]> {
-  const { data, error } = await supabase
-    .from("comment_positions")
-    .select("comment_id, photo_id, top_pct, left_pct, updated_at")
-    .eq("photo_id", photoId);
-
-  if (error) {
-    console.warn("listPositionsByPhoto error:", error.message);
-    return [];
-  }
-  return (data ?? []) as DBPosRow[];
-}
+import { watchGallery } from "../../lib/live-gallery";
+import type { CommentRow as DBCommentRow, PositionRow as DBPosRow } from "../../../shared/gallery-types";
+import { writeApi } from "../../lib/api";
 
 async function upsertPosition(row: DBPosRow): Promise<void> {
-  const { error } = await supabase
-    .from("comment_positions")
-    .upsert(
-      {
-        comment_id: row.comment_id,
-        photo_id: row.photo_id,
-        top_pct: row.top_pct,
-        left_pct: row.left_pct,
-      },
-      { onConflict: "comment_id" }
-    );
-  if (error) {
-    console.warn("upsertPosition error:", error.message);
-  }
+  await writeApi("/api/positions", "PUT", row);
 }
 
 function hashToUnit(s: string): number {
@@ -69,17 +29,6 @@ function positionFor(id: string): { top: string; left: string } {
   return { top: `${topPct.toFixed(2)}%`, left: `${leftPct.toFixed(2)}%` };
 }
 
-async function listCommentsByPhoto(photoId: string) {
-  const { data, error } = await supabase
-    .from("comments")
-    .select("id, photo_id, text, created_at")
-    .eq("photo_id", photoId)
-    .order("created_at", { ascending: false }) as { data: DBCommentRow[] | null; error: unknown };
-
-  if (error) throw error;
-  return (data ?? []);
-}
-
 export default function HostPicture() {
   const [params] = useSearchParams();
   const artwork = getArtworkOrFallback(params.get("photo") ?? "l1");
@@ -88,6 +37,9 @@ export default function HostPicture() {
   const label = artwork.title.ja;
   const [items, setItems] = useState<DBCommentRow[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [positionError, setPositionError] = useState(false);
+  const [loadError, setLoadError] = useState(false);
+  const dragIdRef = useRef<string | null>(null);
 
   const [positions, setPositions] = useState<Record<string, { top: number; left: number }>>({});
   const [zOrder, setZOrder] = useState<Record<string, number>>({});
@@ -213,75 +165,29 @@ const pillBase: React.CSSProperties = {
     }));
   };
   useEffect(() => {
-    let alive = true;
-    (async () => {
-      try {
-        setLoading(true);
-        const list = await listCommentsByPhoto(photoId);
-        if (alive) setItems(list);
-      } catch (e) {
-        console.error(e);
-      } finally {
-        if (alive) setLoading(false);
-      }
-    })();
-    return () => {
-      alive = false;
-    };
-  }, [photoId]);
-
-  useEffect(() => {
-    (async () => {
-      // fetch saved positions for this photo and merge into state
-      const rows = await listPositionsByPhoto(photoId);
-      if (rows.length === 0) return;
-      setPositions((prev) => {
-        const next = { ...prev };
-        rows.forEach((r) => {
-          next[r.comment_id] = { top: r.top_pct, left: r.left_pct };
-        });
+    setLoading(true);
+    setItems([]);
+    setPositions({});
+    setZOrder({});
+    setLoadError(false);
+    setPositionError(false);
+    return watchGallery(photoId, ({ comments, positions: saved }) => {
+      setItems(comments);
+      setPositions(prev => {
+        const next: Record<string, { top: number; left: number }> = {};
+        for (const comment of comments) {
+          const stored = saved.find(row => row.comment_id === comment.id);
+          const fallback = positionFor(comment.id);
+          next[comment.id] = comment.id === dragIdRef.current && prev[comment.id]
+            ? prev[comment.id]
+            : stored ? { top: stored.top_pct, left: stored.left_pct }
+              : { top: parseFloat(fallback.top), left: parseFloat(fallback.left) };
+        }
         return next;
       });
-    })();
-  }, [photoId, items.length]);
-
-  useEffect(() => {
-    const channel = supabase
-      .channel(`comments_${photoId}`)
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "comments", filter: `photo_id=eq.${photoId}` },
-        (payload: RealtimePostgresInsertPayload<DBCommentRow>) => {
-          const r = payload.new as DBCommentRow;
-          setItems((prev: DBCommentRow[]) => [r, ...prev]);
-        }
-      )
-      .on(
-        "postgres_changes",
-        { event: "DELETE", schema: "public", table: "comments", filter: `photo_id=eq.${photoId}` },
-        (payload: RealtimePostgresDeletePayload<DBCommentRow>) => {
-          const deletedId = payload.old.id;
-          if (!deletedId) {
-            return;
-          }
-          setItems((prev) => prev.filter((item) => item.id !== deletedId));
-          setPositions((prev) => {
-            const next = { ...prev };
-            delete next[deletedId];
-            return next;
-          });
-          setZOrder((prev) => {
-            const next = { ...prev };
-            delete next[deletedId];
-            return next;
-          });
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
+      setLoading(false);
+      setLoadError(false);
+    }, () => { setLoading(false); setLoadError(true); });
   }, [photoId]);
 
   return (
@@ -290,6 +196,14 @@ const pillBase: React.CSSProperties = {
         <h2 style={{ margin: 0 }}>みんなのコメント — {descriptionText}</h2>
         <Link to={`/host?lang=${uiLang}`} style={{ textDecoration: "none", fontSize: 14 }}>← 一覧に戻る</Link>
       </header>
+
+      {loadError && <p role="status">{uiLang === "en"
+        ? "Comments could not be refreshed. Reconnecting…"
+        : "コメントを更新できませんでした。再接続しています…"}</p>}
+
+      {positionError && <p role="alert">{uiLang === "en"
+        ? "The position could not be saved. Please wait a moment and try again."
+        : "位置を保存できませんでした。少し待ってから、もう一度お試しください。"}</p>}
 
       <section style={imgWrap}>
         <img src={src} alt={label} style={img} />
@@ -308,7 +222,10 @@ const pillBase: React.CSSProperties = {
                 key={c.id}
                 style={getStyleFor(c.id)}
                 onPointerDown={(e) => {
+                  if (e.button !== 0) return;
+                  e.preventDefault();
                   bringToFront(c.id);
+                  dragIdRef.current = c.id;
                   setDragId(c.id);
                   (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
                   updatePosFromPointer(c.id, e.clientX, e.clientY);
@@ -320,25 +237,31 @@ const pillBase: React.CSSProperties = {
                 }}
                 onPointerUp={(e) => {
                   if (dragId === c.id) {
+                    dragIdRef.current = null;
                     setDragId(null);
                     (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
                     const p = positions[c.id];
                     if (p) {
-                      upsertPosition({
+                      setPositionError(false);
+                      void upsertPosition({
                         comment_id: c.id,
                         photo_id: photoId,
                         top_pct: p.top,
                         left_pct: p.left,
-                      });
+                      }).catch(() => setPositionError(true));
                     }
                   }
                 }}
+                onDragStart={(e) => e.preventDefault()}
+                onPointerCancel={() => { dragIdRef.current = null; setDragId(null); }}
+                onLostPointerCapture={() => { dragIdRef.current = null; setDragId(null); }}
                 onClick={() => bringToFront(c.id)}
               >
                 <div style={{ ...pillBase, ...bgForRank(rankById[c.id]) }}>
                   <img
                     src={iconForRank(rankById[c.id])}
                     alt="comment marker"
+                    draggable={false}
                     style={{ width: 43, height: 43, display: "block", flex: "0 0 auto", marginTop: -13 }}
                   />
                   <div style={{ whiteSpace: "pre-wrap", fontSize: 17, color: "#222" }}>{c.text}</div>
@@ -414,6 +337,7 @@ const bubble: React.CSSProperties = {
   boxShadow: "none",
   backdropFilter: "none",
   userSelect: "none",
+  touchAction: "none",
   willChange: "transform",
 };
 

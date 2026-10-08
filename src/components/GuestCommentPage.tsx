@@ -4,13 +4,13 @@ import { useNavigate } from "react-router-dom";
 import { addCommentToDB, deleteCommentFromDB, listCommentsByPhoto, type CommentItem } from "../lib/comments";
 import { formatArtworkDescription, galleryCopy, getArtworkOrFallback } from "../lib/gallery";
 import { buildSearchWithLang, type AppLang } from "../lib/lang";
+import { ApiError } from "../lib/api";
+import { MAX_COMMENT_LENGTH } from "../../shared/validation";
 
 type GuestCommentPageProps = {
   photoId: string;
   lang: AppLang;
 };
-
-const deletePassword = import.meta.env.VITE_COMMENT_DELETE_PASSWORD;
 
 export default function GuestCommentPage({ photoId, lang }: GuestCommentPageProps) {
   const navigate = useNavigate();
@@ -45,7 +45,7 @@ export default function GuestCommentPage({ photoId, lang }: GuestCommentPageProp
 
   const handleSubmit = async () => {
     const trimmed = text.trim();
-    if (!trimmed) {
+    if (!trimmed || trimmed.length > MAX_COMMENT_LENGTH) {
       return;
     }
 
@@ -56,25 +56,16 @@ export default function GuestCommentPage({ photoId, lang }: GuestCommentPageProp
       setItems(await listCommentsByPhoto(artwork.id));
     } catch (error) {
       console.error(error);
-      alert(galleryCopy.commentUi.saveError[lang]);
+      alert(error instanceof ApiError && error.status === 429
+        ? galleryCopy.commentUi.rateLimited[lang] : galleryCopy.commentUi.saveError[lang]);
     } finally {
       setSaving(false);
     }
   };
 
   const handleDelete = async (commentId: string) => {
-    if (!deletePassword) {
-      alert(galleryCopy.commentUi.passwordNotConfigured[lang]);
-      return;
-    }
-
     const inputPassword = window.prompt(galleryCopy.commentUi.passwordPrompt[lang]);
     if (inputPassword === null) {
-      return;
-    }
-
-    if (inputPassword !== deletePassword) {
-      alert(galleryCopy.commentUi.passwordMismatch[lang]);
       return;
     }
 
@@ -84,11 +75,14 @@ export default function GuestCommentPage({ photoId, lang }: GuestCommentPageProp
 
     try {
       setDeletingId(commentId);
-      await deleteCommentFromDB(commentId);
+      await deleteCommentFromDB(commentId, inputPassword);
       setItems((prev) => prev.filter((item) => item.id !== commentId));
     } catch (error) {
       console.error(error);
-      alert(galleryCopy.commentUi.deleteError[lang]);
+      alert(error instanceof ApiError && error.status === 401
+        ? galleryCopy.commentUi.passwordMismatch[lang]
+        : error instanceof ApiError && error.status === 429
+          ? galleryCopy.commentUi.rateLimited[lang] : galleryCopy.commentUi.deleteError[lang]);
     } finally {
       setDeletingId(null);
     }
@@ -131,6 +125,7 @@ export default function GuestCommentPage({ photoId, lang }: GuestCommentPageProp
           onChange={(event) => setText(event.target.value)}
           style={textarea}
           rows={3}
+          maxLength={MAX_COMMENT_LENGTH}
         />
         <button
           type="button"
@@ -180,7 +175,7 @@ export default function GuestCommentPage({ photoId, lang }: GuestCommentPageProp
                       : galleryCopy.commentUi.delete[lang]}
                   </button>
                 </div>
-                <div style={{ whiteSpace: "pre-wrap" }}>{item.text}</div>
+                <div style={commentText}>{item.text}</div>
               </li>
             ))}
           </ul>
@@ -221,14 +216,22 @@ const label: React.CSSProperties = {
 
 const textarea: React.CSSProperties = {
   width: "100%",
+  boxSizing: "border-box",
+  minHeight: 96,
   padding: "12px 14px",
   borderRadius: 10,
   border: "1px solid #ddd",
+  background: "#fff",
   fontSize: 16,
+  fontFamily: "inherit",
+  lineHeight: 1.6,
+  resize: "vertical",
+  overflowWrap: "anywhere",
 };
 
 const primaryBtn: React.CSSProperties = {
   width: "100%",
+  boxSizing: "border-box",
   padding: "12px 14px",
   borderRadius: 10,
   border: "none",
@@ -241,6 +244,7 @@ const primaryBtn: React.CSSProperties = {
 
 const secondaryBtn: React.CSSProperties = {
   width: "100%",
+  boxSizing: "border-box",
   padding: "12px 14px",
   borderRadius: 10,
   border: "1px solid black",
@@ -260,10 +264,21 @@ const commentList: React.CSSProperties = {
 };
 
 const commentItem: React.CSSProperties = {
-  padding: 12,
-  borderRadius: 10,
-  border: "1px solid #eee",
+  padding: "12px 14px",
+  borderRadius: 12,
+  border: "1px solid #e6e6e6",
   background: "#fff",
+  boxShadow: "0 1px 2px rgba(0, 0, 0, 0.04)",
+  minWidth: 0,
+  overflow: "hidden",
+};
+
+const commentText: React.CSSProperties = {
+  whiteSpace: "pre-wrap",
+  overflowWrap: "anywhere",
+  wordBreak: "break-word",
+  lineHeight: 1.6,
+  color: "#222",
 };
 
 const commentMetaRow: React.CSSProperties = {

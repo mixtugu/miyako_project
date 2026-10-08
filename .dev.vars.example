@@ -1,0 +1,2 @@
+# Generate a new random password of at least 16 characters. This is a Worker secret only.
+COMMENT_DELETE_PASSWORD=replace-with-a-new-long-random-password
